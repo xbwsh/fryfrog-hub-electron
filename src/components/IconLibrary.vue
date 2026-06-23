@@ -48,12 +48,12 @@ const colorVars = computed(() => {
 })
 
 const tabLabels: Record<CategoryKey, string> = {
-  general: 'General / System',
-  music: 'Music',
-  comic: 'Comic',
-  audiobook: 'Audiobook',
-  ebook: 'eBook',
-  video: 'Video',
+  general: '通用 / 系统',
+  music: '音乐',
+  comic: '漫画',
+  audiobook: '有声书',
+  ebook: '电子书',
+  video: '视频',
 }
 
 const tabOrder: CategoryKey[] = ['general', 'music', 'comic', 'audiobook', 'ebook', 'video']
@@ -106,8 +106,8 @@ function showToast(msg: string) {
 <template>
   <div class="icon-library-page" :style="colorVars">
     <header class="il-header">
-      <h1>SVG Icon <span>Library</span></h1>
-      <p>Music · Comic · Audiobook · eBook · Video · System · 24×24 · stroke 1.5</p>
+      <h1>SVG 图标 <span>库</span></h1>
+      <p>音乐 · 漫画 · 有声书 · 电子书 · 视频 · 系统 · 24×24 · 描边 1.5</p>
     </header>
 
     <div class="il-tabs">
@@ -140,14 +140,14 @@ function showToast(msg: string) {
           stroke-linejoin="round"
           v-html="icon.svg"
         />
-        <span class="il-icon-name">{{ icon.name }}</span>
+        <span class="il-icon-name">{{ icon.nameCn }}</span>
         <span class="il-icon-id">{{ icon.id }}</span>
       </div>
     </div>
 
     <footer class="il-footer">
-      <p>All icons · <span>24×24</span> · stroke 1.5 · rounded caps & joins</p>
-      <p style="margin-top:6px;">Click any icon to copy its SVG code to clipboard</p>
+      <p>所有图标 · <span>24×24</span> · 描边 1.5 · 圆角端点与连接</p>
+      <p style="margin-top:6px;">点击图标复制 SVG 代码到剪贴板</p>
     </footer>
 
     <div class="il-toast" :class="{ show: toastVisible }">{{ toastMessage }}</div>

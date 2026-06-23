@@ -2,7 +2,7 @@
   <div class="comics-view">
     <div class="view-header">
       <div class="header-left">
-        <h1>📚 漫画</h1>
+        <h1>漫画</h1>
         <p class="view-subtitle">管理你的漫画库</p>
       </div>
       <div class="header-actions">
@@ -282,7 +282,7 @@ onMounted(loadComics)
 .series-list {
   flex: 1;
   overflow-y: auto;
-  padding: 0 32px 32px;
+  padding: 0 32px 80px;
 }
 
 .series-group {

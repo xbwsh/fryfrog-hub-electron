@@ -2,6 +2,7 @@
   <div class="app-container" v-if="connected">
     <Sidebar />
     <div class="main-area">
+      <div class="titlebar-drag"></div>
       <main class="main-content">
         <router-view />
       </main>
@@ -11,7 +12,7 @@
   <ServerConnect v-else-if="!restoring" @connected="onConnected" />
   <div v-else class="loading-screen">
     <div class="loading-content">
-      <div class="loading-icon">🐸</div>
+      <div class="loading-icon">F</div>
       <p>正在恢复连接...</p>
     </div>
   </div>
@@ -60,6 +61,12 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.titlebar-drag {
+  height: 36px;
+  flex-shrink: 0;
+  -webkit-app-region: drag;
 }
 
 .main-content {

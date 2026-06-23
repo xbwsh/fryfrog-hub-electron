@@ -5,6 +5,29 @@
     </div>
 
     <div class="settings-section">
+      <div class="section-title">服务器</div>
+      <div class="setting-item">
+        <div class="item-info">
+          <h3 class="item-label">后端地址</h3>
+          <p class="item-description">Fryfrog Hub 后端服务的访问地址</p>
+        </div>
+        <div class="url-input-group">
+          <input
+            v-model="backendUrlInput"
+            type="text"
+            class="url-input"
+            placeholder="http://localhost:20058"
+            @blur="saveBackendUrl"
+            @keydown.enter="saveBackendUrl"
+          />
+          <button class="btn-save" :disabled="backendUrlInput === connectionStore.backendUrl" @click="saveBackendUrl">
+            保存
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
       <div class="section-title">外观</div>
       <div class="setting-item">
         <div class="item-info">
@@ -69,10 +92,21 @@ import { computed, ref } from 'vue'
 import { usePlayerStore } from '@/stores/player'
 import { useThemeStore, type ThemeMode } from '@/stores/theme'
 import { useLibraryStore } from '@/stores/library'
+import { useConnectionStore } from '@/stores/connection'
 
 const playerStore = usePlayerStore()
 const themeStore = useThemeStore()
 const libraryStore = useLibraryStore()
+const connectionStore = useConnectionStore()
+
+const backendUrlInput = ref(connectionStore.backendUrl)
+
+function saveBackendUrl() {
+  const url = backendUrlInput.value.trim()
+  if (url && url !== connectionStore.backendUrl) {
+    connectionStore.setBackendUrl(url)
+  }
+}
 
 const isRescanning = ref(false)
 const rescanResult = ref<{
@@ -123,7 +157,7 @@ async function handleRescan() {
 
 <style scoped>
 .settings-view {
-  padding: 24px 32px;
+  padding: 24px 32px 80px;
   overflow-y: auto;
   height: 100%;
 }
@@ -258,6 +292,51 @@ async function handleRescan() {
 
 .btn-rescan:disabled {
   opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.url-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.url-input {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  font-size: 14px;
+  color: var(--text-primary);
+  width: 280px;
+  font-family: monospace;
+  transition: var(--transition);
+}
+
+.url-input:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.btn-save {
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 8px 16px;
+  font-size: 13px;
+  color: white;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.btn-save:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.btn-save:disabled {
+  opacity: 0.4;
   cursor: not-allowed;
 }
 

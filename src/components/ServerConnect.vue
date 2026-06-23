@@ -2,7 +2,7 @@
   <div class="server-connect">
     <div class="connect-card">
       <div class="logo">
-        <div class="logo-icon">🐸</div>
+        <div class="logo-icon">F</div>
         <h1>Fryfrog Hub</h1>
         <p class="subtitle">登录以继续</p>
       </div>

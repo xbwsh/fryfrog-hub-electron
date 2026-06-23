@@ -1,10 +1,10 @@
 <template>
   <nav class="sidebar">
+    <div class="titlebar-drag"></div>
     <div class="sidebar-header">
-      <div class="logo">🐸</div>
       <div class="header-info">
         <span class="logo-text">Fryfrog Hub</span>
-        <span class="user-name">{{ connectionStore.username }}</span>
+        <span class="server-url">{{ serverDisplay }}</span>
       </div>
     </div>
 
@@ -58,12 +58,22 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useConnectionStore } from '@/stores/connection'
 import { useRouter } from 'vue-router'
 import AppIcon from '@/components/AppIcon.vue'
 
 const connectionStore = useConnectionStore()
 const router = useRouter()
+
+const serverDisplay = computed(() => {
+  try {
+    const url = new URL(connectionStore.backendUrl)
+    return url.host
+  } catch {
+    return connectionStore.backendUrl
+  }
+})
 
 function handleDisconnect() {
   connectionStore.disconnect()
@@ -81,18 +91,25 @@ function handleDisconnect() {
   height: 100%;
   overflow-y: auto;
   flex-shrink: 0;
+  padding-top: 36px;
+  box-sizing: border-box;
+}
+
+.titlebar-drag {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 200px;
+  height: 36px;
+  -webkit-app-region: drag;
 }
 
 .sidebar-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 20px 16px;
+  padding: 16px;
   border-bottom: 1px solid var(--border);
-}
-
-.logo {
-  font-size: 24px;
 }
 
 .logo-text {
@@ -107,9 +124,10 @@ function handleDisconnect() {
   flex-direction: column;
 }
 
-.user-name {
+.server-url {
   font-size: 11px;
   color: var(--text-muted);
+  font-family: monospace;
 }
 
 .nav-section {

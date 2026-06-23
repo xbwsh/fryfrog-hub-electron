@@ -2,7 +2,7 @@
   <div class="videos-view">
     <div class="view-header">
       <div class="header-left">
-        <h1>🎬 视频</h1>
+        <h1>视频</h1>
         <p class="view-subtitle">管理你的视频库</p>
       </div>
       <div class="header-actions">
@@ -252,7 +252,7 @@ onMounted(loadVideos)
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   grid-auto-rows: max-content;
   gap: 16px;
-  padding: 0 32px 32px;
+  padding: 0 32px 80px;
   overflow-y: auto;
 }
 
@@ -262,11 +262,7 @@ onMounted(loadVideos)
   overflow: hidden;
   cursor: pointer;
   transition: var(--transition);
-}
-
-.content-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  min-width: 0;
 }
 
 .card-cover {
@@ -389,6 +385,16 @@ onMounted(loadVideos)
 
 .card-info {
   padding: 12px;
+  overflow: hidden;
+}
+
+.content-card:hover .card-info {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.content-card:hover .card-info::-webkit-scrollbar {
+  display: none;
 }
 
 .card-title {
@@ -399,6 +405,16 @@ onMounted(loadVideos)
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: default;
+}
+
+.content-card:hover .card-title {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.content-card:hover .card-title::-webkit-scrollbar {
+  display: none;
 }
 
 .card-meta {

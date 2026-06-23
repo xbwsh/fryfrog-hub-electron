@@ -8,12 +8,11 @@
     <section class="content-section">
       <div class="section-header">
         <div class="section-title">
-          <span class="section-icon">🎵</span>
           <h2>音乐</h2>
         </div>
         <router-link to="/music" class="see-all">查看全部</router-link>
       </div>
-      <div class="content-grid" v-if="musicTracks.length > 0">
+      <div class="content-grid" v-if="musicTracks.length > 0" @wheel.prevent="handleWheel">
         <div v-for="track in musicTracks.slice(0, 6)" :key="track.id" class="content-card" @click="playMusic(track)">
           <div class="card-cover music-cover">
             <img :src="getMusicCoverArtUrl(track.id)" alt="封面" />
@@ -24,7 +23,7 @@
           </div>
         </div>
       </div>
-      <div class="content-grid" v-else>
+      <div class="content-grid" v-else @wheel.prevent="handleWheel">
         <div v-for="i in 6" :key="'music-' + i" class="content-card">
           <div class="card-cover music-cover">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -43,12 +42,11 @@
     <section class="content-section">
       <div class="section-header">
         <div class="section-title">
-          <span class="section-icon">📚</span>
           <h2>漫画</h2>
         </div>
         <router-link to="/comics" class="see-all">查看全部</router-link>
       </div>
-      <div class="content-grid" v-if="comics.length > 0">
+      <div class="content-grid" v-if="comics.length > 0" @wheel.prevent="handleWheel">
         <div v-for="comic in comics.slice(0, 6)" :key="comic.id" class="content-card" @click="readComic(comic)">
           <div class="card-cover comic-cover">
             <img :src="getComicCoverUrl(comic.id)" alt="封面" @error="onImageError" />
@@ -59,7 +57,7 @@
           </div>
         </div>
       </div>
-      <div class="content-grid" v-else>
+      <div class="content-grid" v-else @wheel.prevent="handleWheel">
         <div v-for="i in 6" :key="'comic-' + i" class="content-card">
           <div class="card-cover comic-cover">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -78,12 +76,11 @@
     <section class="content-section">
       <div class="section-header">
         <div class="section-title">
-          <span class="section-icon">📖</span>
           <h2>电子书</h2>
         </div>
         <router-link to="/ebooks" class="see-all">查看全部</router-link>
       </div>
-      <div class="content-grid" v-if="ebooks.length > 0">
+      <div class="content-grid" v-if="ebooks.length > 0" @wheel.prevent="handleWheel">
         <div v-for="book in ebooks.slice(0, 6)" :key="book.id" class="content-card" @click="readEbook(book)">
           <div class="card-cover ebook-cover">
             <img :src="getEbookCoverUrl(book.id)" alt="封面" @error="onImageError" />
@@ -94,7 +91,7 @@
           </div>
         </div>
       </div>
-      <div class="content-grid" v-else>
+      <div class="content-grid" v-else @wheel.prevent="handleWheel">
         <div v-for="i in 6" :key="'ebook-' + i" class="content-card">
           <div class="card-cover ebook-cover">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -113,12 +110,11 @@
     <section class="content-section">
       <div class="section-header">
         <div class="section-title">
-          <span class="section-icon">🎬</span>
           <h2>视频</h2>
         </div>
         <router-link to="/videos" class="see-all">查看全部</router-link>
       </div>
-      <div class="content-grid" v-if="seriesList.length > 0">
+      <div class="content-grid" v-if="seriesList.length > 0" @wheel.prevent="handleWheel">
         <div v-for="series in seriesList.slice(0, 6)" :key="series.id" class="content-card" @click="watchVideo(series)">
           <div class="card-cover video-cover">
             <img :src="series.posterUrl || getSeriesPosterUrl(series.id)" alt="封面" @error="onImageError" />
@@ -129,7 +125,7 @@
           </div>
         </div>
       </div>
-      <div class="content-grid" v-else>
+      <div class="content-grid" v-else @wheel.prevent="handleWheel">
         <div v-for="i in 6" :key="'video-' + i" class="content-card">
           <div class="card-cover video-cover">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -216,11 +212,16 @@ function onImageError(e: Event) {
   const img = e.target as HTMLImageElement
   img.style.display = 'none'
 }
+
+function handleWheel(e: WheelEvent) {
+  const container = e.currentTarget as HTMLElement
+  container.scrollLeft += e.deltaY
+}
 </script>
 
 <style scoped>
 .home-view {
-  padding: 24px 32px;
+  padding: 24px 32px 80px;
   overflow-y: auto;
   height: 100%;
 }
@@ -258,10 +259,6 @@ function onImageError(e: Event) {
   gap: 10px;
 }
 
-.section-icon {
-  font-size: 20px;
-}
-
 .section-header h2 {
   font-family: var(--font-display);
   font-size: 20px;
@@ -281,10 +278,16 @@ function onImageError(e: Event) {
 }
 
 .content-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  grid-auto-rows: max-content;
+  display: flex;
   gap: 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 8px;
+  scroll-behavior: smooth;
+}
+
+.content-grid::-webkit-scrollbar {
+  display: none;
 }
 
 .content-card {
@@ -293,6 +296,9 @@ function onImageError(e: Event) {
   overflow: hidden;
   cursor: pointer;
   transition: var(--transition);
+  min-width: 160px;
+  max-width: 160px;
+  flex-shrink: 0;
 }
 
 .content-card:hover {
@@ -333,6 +339,16 @@ function onImageError(e: Event) {
 
 .card-info {
   padding: 12px;
+  overflow: hidden;
+}
+
+.content-card:hover .card-info {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.content-card:hover .card-info::-webkit-scrollbar {
+  display: none;
 }
 
 .card-title {
@@ -344,6 +360,15 @@ function onImageError(e: Event) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.content-card:hover .card-title {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.content-card:hover .card-title::-webkit-scrollbar {
+  display: none;
 }
 
 .card-subtitle {

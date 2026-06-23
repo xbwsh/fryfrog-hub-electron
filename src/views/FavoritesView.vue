@@ -1,7 +1,7 @@
 <template>
   <div class="favorites-view">
     <div class="view-header">
-      <h1>⭐ 收藏</h1>
+      <h1>收藏</h1>
       <p class="view-subtitle">你喜欢的内容</p>
     </div>
 
@@ -468,7 +468,7 @@ onMounted(loadAll)
 .content-grid {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 32px;
+  padding: 16px 32px 80px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   grid-auto-rows: max-content;
@@ -480,6 +480,7 @@ onMounted(loadAll)
   cursor: pointer;
   border-radius: var(--radius-md);
   transition: var(--transition);
+  min-width: 0;
 }
 
 .content-card:hover {
@@ -577,6 +578,16 @@ onMounted(loadAll)
 
 .card-info {
   padding: 0 4px;
+  overflow: hidden;
+}
+
+.content-card:hover .card-info {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.content-card:hover .card-info::-webkit-scrollbar {
+  display: none;
 }
 
 .card-title {
@@ -587,6 +598,15 @@ onMounted(loadAll)
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.content-card:hover .card-title {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.content-card:hover .card-title::-webkit-scrollbar {
+  display: none;
 }
 
 .card-meta {
@@ -603,7 +623,7 @@ onMounted(loadAll)
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--bg-primary);
+  background: #000;
   z-index: 100;
   display: flex;
   flex-direction: column;

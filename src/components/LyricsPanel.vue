@@ -4,18 +4,15 @@
       class="lyrics-bg-image" alt="" />
     <div class="lyrics-bg-overlay" ref="bgOverlay"></div>
 
-    <div class="lyrics-header">
-      <h2>歌词</h2>
-      <div class="header-actions">
-        <span v-if="lyricsSource" class="lyrics-tag">{{ lyricsSource }}</span>
-        <button class="mode-toggle-btn" @click="toggleLayoutMode"
-          :title="layoutMode === 'full' ? '分屏模式' : '全屏模式'">
-          <AppIcon :name="layoutMode === 'full' ? 'fullscreen' : 'fullscreen-exit'" :size="20" />
-        </button>
-        <button class="close-btn" @click="$emit('close')">
-          <AppIcon name="close" :size="24" />
-        </button>
-      </div>
+    <div class="top-actions">
+      <span v-if="lyricsSource" class="lyrics-tag">{{ lyricsSource }}</span>
+      <button class="mode-toggle-btn" @click="toggleLayoutMode"
+        :title="layoutMode === 'full' ? '分屏模式' : '全屏模式'">
+        <AppIcon :name="layoutMode === 'full' ? 'split-horizontal' : 'fullscreen'" :size="20" />
+      </button>
+      <button class="close-btn" @click="$emit('close')" title="关闭">
+        <AppIcon name="close" :size="20" />
+      </button>
     </div>
 
     <div class="lyrics-body">
@@ -304,58 +301,44 @@ function seekToLyric(time: number) {
   z-index: 0;
 }
 
-.lyrics-header {
-  position: relative;
-  z-index: 1;
+.top-actions {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  z-index: 10;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(20px);
-  flex-shrink: 0;
+  gap: 4px;
 }
 
-.lyrics-header h2 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.mode-toggle-btn,
-.close-btn {
+.top-actions button {
   background: none;
   border: none;
   color: #fff;
-  opacity: 0.7;
+  opacity: 0.5;
   cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
+  -webkit-app-region: no-drag;
+  padding: 8px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, background 0.2s;
 }
 
-.mode-toggle-btn:hover,
-.close-btn:hover {
+.top-actions button:hover {
   opacity: 1;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .lyrics-tag {
-  font-size: 12px;
+  font-size: 11px;
   padding: 2px 8px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.15);
-  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.6);
   font-weight: 500;
+  line-height: 1;
 }
 
 /* ===== body ===== */
@@ -615,7 +598,7 @@ function seekToLyric(time: number) {
 }
 
 .lyric-line {
-  font-size: 28px;
+  font-size: 20px;
   line-height: 1.8;
   color: rgba(255, 255, 255, 0.35);
   cursor: pointer;
@@ -644,7 +627,7 @@ function seekToLyric(time: number) {
 }
 
 .lyric-line.active {
-  font-size: 38px;
+  font-size: 28px;
   font-weight: 700;
   color: #fff;
   transform: scale(1.05);

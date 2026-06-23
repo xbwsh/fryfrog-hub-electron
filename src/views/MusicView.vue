@@ -1,7 +1,7 @@
 <template>
   <div class="music-view">
     <div class="view-header">
-      <h1>🎵 音乐</h1>
+      <h1>音乐</h1>
       <p class="view-subtitle">管理你的音乐库</p>
     </div>
 
@@ -163,7 +163,7 @@ onMounted(loadTracks)
 .track-list {
   flex: 1;
   overflow-y: auto;
-  padding: 0 16px;
+  padding: 0 16px 80px;
 }
 
 .track-item {
@@ -274,7 +274,7 @@ onMounted(loadTracks)
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--bg-primary);
+  background: #000;
   z-index: 100;
   display: flex;
   flex-direction: column;

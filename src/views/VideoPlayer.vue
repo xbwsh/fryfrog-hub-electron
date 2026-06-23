@@ -125,12 +125,18 @@ onUnmounted(() => {
 
 .top-bar {
   position: absolute;
-  top: 12px;
+  top: 48px;
   left: 12px;
   display: flex;
   align-items: center;
   gap: 10px;
   z-index: 10;
+  -webkit-app-region: drag;
+}
+
+.top-bar button,
+.top-bar span {
+  -webkit-app-region: no-drag;
 }
 
 .close-btn {

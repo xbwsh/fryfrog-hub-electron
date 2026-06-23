@@ -2,7 +2,7 @@
   <div class="ebooks-view">
     <div class="view-header">
       <div class="header-left">
-        <h1>📖 电子书</h1>
+        <h1>电子书</h1>
         <p class="view-subtitle">管理你的电子书库</p>
       </div>
       <div class="header-actions">
@@ -385,7 +385,7 @@ watch(() => route.query.read, () => {
 .series-list {
   flex: 1;
   overflow-y: auto;
-  padding: 0 32px 32px;
+  padding: 0 32px 80px;
 }
 
 .series-group {

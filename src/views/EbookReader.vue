@@ -368,6 +368,13 @@ onUnmounted(() => {
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   z-index: 10;
+  padding-top: 44px;
+  -webkit-app-region: drag;
+}
+
+.reader-toolbar button,
+.reader-toolbar span {
+  -webkit-app-region: no-drag;
 }
 
 .toolbar-btn {
