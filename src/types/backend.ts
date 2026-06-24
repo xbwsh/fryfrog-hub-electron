@@ -17,7 +17,16 @@ export interface MusicTrack {
   bitrateKbps: number
   format: string
   coverArtPath: string
+  coverSource: string | null
   lyrics: string
+  lyricsSource: string | null
+  label: string | null
+  catalogNumber: string | null
+  releaseDate: string | null
+  musicBrainzId: string | null
+  artistImage: string | null
+  artistBio: string | null
+  scrapeStatus: string | null
   favorite: boolean
 }
 
@@ -101,44 +110,44 @@ export interface Ebook {
 export interface VideoDTO {
   id: number
   title: string
-  originalTitle: string
-  director: string
-  actors: string
-  genre: string
-  year: number
-  durationMinutes: number
-  overview: string
+  originalTitle: string | null
+  director: string | null
+  actors: string | null
+  genre: string | null
+  year: number | null
+  durationMinutes: number | null
+  overview: string | null
   fileName: string
   fileSize: number
-  videoCodec: string
-  audioCodec: string
-  resolution: string
-  frameRate: number
-  bitrateKbps: number
+  videoCodec: string | null
+  audioCodec: string | null
+  resolution: string | null
+  frameRate: number | null
+  bitrateKbps: number | null
   format: string
   favorite: boolean
-  tmdbId: number
-  mediaType: string
-  posterUrl: string
-  backdropUrl: string
-  imdbId: string
-  rating: number
-  voteCount: number
+  tmdbId: number | null
+  mediaType: string | null
+  posterUrl: string | null
+  backdropUrl: string | null
+  imdbId: string | null
+  rating: number | null
+  voteCount: number | null
   metadataSource: string
-  metadataUpdatedAt: string
-  metadataDir: string
-  nfoPath: string
-  posterPath: string
-  fanartPath: string
+  metadataUpdatedAt: string | null
+  metadataDir: string | null
+  nfoPath: string | null
+  posterPath: string | null
+  fanartPath: string | null
   scraped: boolean
   isSeries: boolean
-  seriesId: number
-  seriesTitle: string
-  seasonNumber: number
-  episodeNumber: number
-  watchPosition: number
-  watchProgressPercent: number
-  watched: boolean
+  seriesId: number | null
+  seriesTitle: string | null
+  seasonNumber: number | null
+  episodeNumber: number | null
+  watchPosition: number | null
+  watchProgressPercent: number | null
+  watched: boolean | null
 }
 
 export interface VideoProgress {
@@ -159,6 +168,58 @@ export interface ComicProgress {
   updatedAt: string
 }
 
+export interface AnilistMediaTitle {
+  bestTitle: string
+  romaji: string
+  english: string
+  native: string
+}
+
+export interface AnilistCoverImage {
+  large: string
+  medium: string
+}
+
+export interface AnilistStartDate {
+  year: number
+  month: number
+  day: number
+}
+
+export interface AnilistStaffNode {
+  name: { first: string; last: string; full: string }
+}
+
+export interface AnilistStaffEdge {
+  node: AnilistStaffNode
+  role: string
+}
+
+export interface AnilistMediaItem {
+  id: number
+  title: AnilistMediaTitle
+  coverImage: AnilistCoverImage
+  description: string
+  meanScore: number
+  genres: string[]
+  startDate: AnilistStartDate
+  volumes: number
+  status: string
+  type: string
+  staff: { edges: AnilistStaffEdge[] }
+}
+
+export interface BangumiItem {
+  id: number
+  name: string
+  name_cn: string
+  summary: string
+  score: number
+  tags: string[]
+  author: string
+  cover: string
+}
+
 export interface EbookProgress {
   ebookId: number
   currentChapter: number
@@ -170,18 +231,18 @@ export interface EbookProgress {
 export interface SeriesDTO {
   id: number
   title: string
-  originalTitle: string
-  overview: string
-  mediaType: string
-  tmdbId: number
-  rating: number
-  year: number
-  posterUrl: string
-  backdropUrl: string
-  seasonNumber: number
+  originalTitle: string | null
+  overview: string | null
+  mediaType: string | null
+  tmdbId: number | null
+  rating: number | null
+  year: number | null
+  posterUrl: string | null
+  backdropUrl: string | null
+  seasonNumber: number | null
   totalEpisodes: number
   episodeCount: number
-  metadataDir: string
+  metadataDir: string | null
   episodes: VideoDTO[]
 }
 

@@ -1,8 +1,17 @@
 <template>
   <div class="music-view">
     <div class="view-header">
-      <h1>音乐</h1>
-      <p class="view-subtitle">管理你的音乐库</p>
+      <div class="header-left">
+        <h1>音乐</h1>
+        <p class="view-subtitle">管理你的音乐库</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-scrape" :disabled="scrapingAll" @click="handleScrapeAll">
+          {{ scrapingAll ? '刮削中...' : '批量刮削' }}
+        </button>
+        <ScanDirectoryDialog title="扫描音乐目录" description="输入要扫描的目录路径，支持 mp3、flac、wav 等格式" input-placeholder="例如: /media/music" @scan="handleScan" />
+        <SearchBar v-model="searchQuery" placeholder="搜索音乐..." @input="handleSearch" />
+      </div>
     </div>
 
     <div v-if="loading" class="loading-state">
@@ -26,6 +35,7 @@
         class="track-item"
         :class="{ active: playerStore.currentTrack?.id === track.id }"
         @click="playTrack(track)"
+        @contextmenu="onContextMenu($event, track)"
       >
         <div class="track-cover-small">
           <img :src="getMusicCoverArtUrl(track.id)" alt="封面" />
@@ -51,23 +61,113 @@
         <LyricsPanel @close="showLyrics = false" />
       </div>
     </transition>
+
+    <Teleport to="body">
+      <div
+        v-if="contextMenu.visible"
+        class="context-menu"
+        :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
+        @click.stop
+      >
+        <div class="context-menu-item" @click="handleScrape">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          {{ scrapingId === contextMenu.trackId ? '刮削中...' : '刮削元数据' }}
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import type { MusicTrack } from '@/types/backend'
-import { getAllTracks } from '@/api/backend'
-import { getMusicCoverArtUrl } from '@/api/backend'
+import { getAllTracks, getMusicCoverArtUrl, scrapeTrack, scrapeAllTracks, searchMusic, scanDirectory } from '@/api/backend'
 import { usePlayerStore } from '@/stores/player'
 import MusicPlayerBar from '@/components/MusicPlayerBar.vue'
 import LyricsPanel from '@/components/LyricsPanel.vue'
+import SearchBar from '@/components/SearchBar.vue'
+import ScanDirectoryDialog from '@/components/ScanDirectoryDialog.vue'
 
 const playerStore = usePlayerStore()
 const tracks = ref<MusicTrack[]>([])
 const loading = ref(false)
 const error = ref('')
 const showLyrics = ref(false)
+const scrapingId = ref<number | null>(null)
+const scrapingAll = ref(false)
+const searchQuery = ref('')
+
+const contextMenu = ref({ visible: false, x: 0, y: 0, trackId: 0 })
+
+function onContextMenu(e: MouseEvent, track: MusicTrack) {
+  e.preventDefault()
+  contextMenu.value = { visible: true, x: e.clientX, y: e.clientY, trackId: track.id }
+}
+
+function closeContextMenu() {
+  contextMenu.value = { ...contextMenu.value, visible: false }
+}
+
+async function handleScrape() {
+  const id = contextMenu.value.trackId
+  closeContextMenu()
+  if (scrapingId.value !== null) return
+  scrapingId.value = id
+  try {
+    const updated = await scrapeTrack(id)
+    if (updated) {
+      const idx = tracks.value.findIndex(t => t.id === id)
+      if (idx !== -1) tracks.value[idx] = updated
+    }
+  } catch (e) {
+    console.error('Scrape failed:', e)
+  } finally {
+    scrapingId.value = null
+  }
+}
+
+async function handleScrapeAll() {
+  if (scrapingAll.value) return
+  scrapingAll.value = true
+  try {
+    await scrapeAllTracks()
+    await loadTracks()
+  } catch (e) {
+    console.error('Scrape all failed:', e)
+  } finally {
+    scrapingAll.value = false
+  }
+}
+
+async function handleSearch() {
+  if (!searchQuery.value.trim()) {
+    await loadTracks()
+    return
+  }
+  loading.value = true
+  error.value = ''
+  try {
+    tracks.value = await searchMusic(searchQuery.value)
+  } catch (e) {
+    error.value = '搜索失败'
+    console.error('Search failed:', e)
+  } finally {
+    loading.value = false
+  }
+}
+
+async function handleScan(path: string) {
+  try {
+    await scanDirectory(path)
+    await loadTracks()
+  } catch (e) {
+    error.value = '扫描失败'
+    console.error('Failed to scan directory:', e)
+  }
+}
 
 async function loadTracks() {
   loading.value = true
@@ -92,7 +192,13 @@ function formatDuration(seconds: number): string {
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
 }
 
-onMounted(loadTracks)
+onMounted(() => {
+  loadTracks()
+  document.addEventListener('click', closeContextMenu)
+})
+onUnmounted(() => {
+  document.removeEventListener('click', closeContextMenu)
+})
 </script>
 
 <style scoped>
@@ -105,6 +211,13 @@ onMounted(loadTracks)
 .view-header {
   padding: 24px 32px 16px;
   flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.header-left {
+  flex: 1;
 }
 
 .view-header h1 {
@@ -117,6 +230,90 @@ onMounted(loadTracks)
 .view-subtitle {
   color: var(--text-secondary);
   font-size: 14px;
+}
+
+.header-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scan-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 16px;
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+  height: 36px;
+  box-sizing: border-box;
+}
+
+.scan-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-scrape {
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 8px 16px;
+  font-size: 14px;
+  color: white;
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+  height: 36px;
+  box-sizing: border-box;
+}
+
+.btn-scrape:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.btn-scrape:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.search-bar input {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 12px 8px 36px;
+  font-size: 14px;
+  color: var(--text-primary);
+  width: 240px;
+  height: 36px;
+  box-sizing: border-box;
+  transition: var(--transition);
+}
+
+.search-bar input:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
 .loading-state,
@@ -171,6 +368,7 @@ onMounted(loadTracks)
   align-items: center;
   gap: 12px;
   padding: 10px 16px;
+  margin-bottom: 4px;
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: var(--transition);
@@ -295,5 +493,32 @@ onMounted(loadTracks)
 .lyrics-fade-leave-from {
   opacity: 1;
   transform: translateY(0);
+}
+
+.context-menu {
+  position: fixed;
+  z-index: 200;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  min-width: 160px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.context-menu-item:hover {
+  background: var(--bg-hover);
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
   <div class="app-container" v-if="connected">
     <Sidebar />
-    <div class="main-area">
+    <div class="main-area" :class="{ 'platform-mac': isMac }">
       <div class="titlebar-drag"></div>
       <main class="main-content">
         <router-view />
@@ -27,6 +27,7 @@ import { useRouter } from 'vue-router'
 
 const connectionStore = useConnectionStore()
 const router = useRouter()
+const isMac = navigator.platform.includes('Mac')
 
 const connected = computed(() => connectionStore.connected)
 const restoring = ref(false)
@@ -63,10 +64,15 @@ onMounted(async () => {
   overflow: hidden;
 }
 
-.titlebar-drag {
+.main-area.platform-mac .titlebar-drag {
+  display: block;
   height: 36px;
   flex-shrink: 0;
   -webkit-app-region: drag;
+}
+
+.titlebar-drag {
+  display: none;
 }
 
 .main-content {

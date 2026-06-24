@@ -16,6 +16,8 @@ import type {
   EbookProgress,
   EbookSeries,
   LibraryRescanResult,
+  AnilistMediaItem,
+  BangumiItem,
 } from '@/types/backend'
 
 const client = axios.create()
@@ -110,6 +112,28 @@ export async function getLyrics(id: number): Promise<string> {
   return response.data.data || ''
 }
 
+export async function scrapeTrack(id: number): Promise<MusicTrack | undefined> {
+  const response = await client.post<ApiResponse<MusicTrack>>(`/api/v1/music/${id}/scrape`)
+  return response.data.data
+}
+
+export async function scrapeByArtist(artist: string): Promise<MusicTrack[]> {
+  const response = await client.post<ApiResponse<MusicTrack[]>>('/api/v1/music/scrape/artist', null, {
+    params: { artist },
+  })
+  return response.data.data || []
+}
+
+export async function scrapeAllTracks(): Promise<MusicTrack[]> {
+  const response = await client.post<ApiResponse<MusicTrack[]>>('/api/v1/music/scrape/all')
+  return response.data.data || []
+}
+
+export async function getScrapeStatus(): Promise<number> {
+  const response = await client.get<ApiResponse<number>>('/api/v1/music/scrape/status')
+  return response.data.data || 0
+}
+
 export async function getAllComics(): Promise<Comic[]> {
   const response = await client.get<ApiResponse<Comic[]>>('/api/v1/comic')
   return response.data.data || []
@@ -179,6 +203,12 @@ export async function searchComics(query: string): Promise<Comic[]> {
 
 export function getComicCoverUrl(id: number): string {
   return `${config.url}/api/v1/comic/${id}/cover`
+}
+
+export function getComicCoverUrlWithCache(id: number, updatedAt?: string): string {
+  return updatedAt
+    ? `${config.url}/api/v1/comic/${id}/cover?t=${updatedAt}`
+    : `${config.url}/api/v1/comic/${id}/cover`
 }
 
 export async function getComicPages(id: number): Promise<PageInfo[]> {
@@ -484,6 +514,49 @@ export async function getFavorites(): Promise<MusicTrack[]> {
 
 export async function rescanLibrary(): Promise<LibraryRescanResult> {
   const response = await client.post<ApiResponse<LibraryRescanResult>>('/api/v1/library/rescan')
+  return response.data.data
+}
+
+export async function searchAnilistComics(query: string): Promise<AnilistMediaItem[]> {
+  const response = await client.get<ApiResponse<AnilistMediaItem[]>>('/api/v1/comic/anilist/search', {
+    params: { q: query },
+  })
+  return response.data.data || []
+}
+
+export async function bindAnilistMetadata(comicId: number, anilistId: number, bindSeries?: boolean): Promise<Comic | undefined> {
+  const response = await client.post<ApiResponse<Comic>>(`/api/v1/comic/${comicId}/anilist/bind`, null, {
+    params: { anilistId, ...(bindSeries !== undefined ? { bindSeries } : {}) },
+  })
+  return response.data.data
+}
+
+export async function searchBangumiComics(query: string): Promise<BangumiItem[]> {
+  const response = await client.get<ApiResponse<BangumiItem[]>>('/api/v1/comic/bangumi/search', {
+    params: { q: query },
+  })
+  return response.data.data || []
+}
+
+export async function bindBangumiMetadata(comicId: number, bangumiId: number, bindSeries?: boolean): Promise<Comic | undefined> {
+  const response = await client.post<ApiResponse<Comic>>(`/api/v1/comic/${comicId}/bangumi/bind`, null, {
+    params: { bangumiId, ...(bindSeries !== undefined ? { bindSeries } : {}) },
+  })
+  return response.data.data
+}
+
+export async function autoScrapeComics(): Promise<string> {
+  const response = await client.post<ApiResponse<string>>('/api/v1/comic/auto-scrape')
+  return response.data.data
+}
+
+export async function organizeComics(): Promise<string> {
+  const response = await client.post<ApiResponse<string>>('/api/v1/comic/organize')
+  return response.data.data
+}
+
+export async function getAnilistStatus(): Promise<boolean> {
+  const response = await client.get<ApiResponse<boolean>>('/api/v1/comic/anilist/status')
   return response.data.data
 }
 

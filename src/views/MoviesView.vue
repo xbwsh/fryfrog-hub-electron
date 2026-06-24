@@ -6,13 +6,19 @@
         <p class="view-subtitle">管理你的视频库</p>
       </div>
       <div class="header-actions">
-        <div class="search-bar">
-          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        <button class="view-toggle" :title="displayMode === 'landscape' ? '切换为竖屏' : '切换为横屏'" @click="toggleDisplayMode">
+          <svg v-if="displayMode === 'landscape'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="3" width="20" height="14" rx="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
           </svg>
-          <input v-model="searchQuery" type="text" placeholder="搜索视频..." @input="handleSearch" />
-        </div>
+          <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="5" y="2" width="14" height="20" rx="2"/>
+            <line x1="12" y1="18" x2="12" y2="18.01"/>
+          </svg>
+        </button>
+        <ScanDirectoryDialog title="扫描视频目录" description="输入要扫描的目录路径，支持 mkv、mp4 等格式" input-placeholder="例如: /media/videos" @scan="handleScan" />
+        <SearchBar v-model="searchQuery" placeholder="搜索视频..." @input="handleSearch" />
       </div>
     </div>
 
@@ -36,10 +42,10 @@
       <p>暂无视频</p>
     </div>
 
-    <div v-else class="content-grid">
+    <div v-else class="content-grid" :class="{ 'portrait-mode': displayMode === 'portrait' }">
       <div v-for="series in seriesList" :key="series.id" class="content-card" @click="viewSeries(series)">
         <div class="card-cover video-cover">
-          <img :src="series.posterUrl || getSeriesPosterUrl(series.id)" :alt="series.title" @error="onImageError" />
+          <img :src="displayMode === 'landscape' ? (series.backdropUrl || getSeriesFanartUrl(series.id)) : (series.posterUrl || getSeriesPosterUrl(series.id))" :alt="series.title" @error="onImageError" />
           <div class="play-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
               <polygon points="5 3 19 12 5 21 5 3"/>
@@ -71,13 +77,31 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import type { SeriesDTO } from '@/types/backend'
-import { getAllSeries, getSeriesPosterUrl } from '@/api/backend'
+import { getAllSeries, getSeriesPosterUrl, getSeriesFanartUrl, scanVideoDirectory } from '@/api/backend'
+import SearchBar from '@/components/SearchBar.vue'
+import ScanDirectoryDialog from '@/components/ScanDirectoryDialog.vue'
 
 const router = useRouter()
 const seriesList = ref<SeriesDTO[]>([])
 const loading = ref(false)
 const error = ref('')
 const searchQuery = ref('')
+const displayMode = ref<'landscape' | 'portrait'>(localStorage.getItem('fryfrog-video-display-mode') as 'landscape' | 'portrait' || 'landscape')
+
+function toggleDisplayMode() {
+  displayMode.value = displayMode.value === 'landscape' ? 'portrait' : 'landscape'
+  localStorage.setItem('fryfrog-video-display-mode', displayMode.value)
+}
+
+async function handleScan(path: string) {
+  try {
+    await scanVideoDirectory(path)
+    await loadVideos()
+  } catch (e) {
+    error.value = '扫描失败'
+    console.error('Failed to scan directory:', e)
+  }
+}
 
 async function loadVideos() {
   loading.value = true
@@ -168,36 +192,29 @@ onMounted(loadVideos)
 
 .header-actions {
   flex-shrink: 0;
-}
-
-.search-bar {
-  position: relative;
   display: flex;
   align-items: center;
+  gap: 8px;
 }
 
-.search-icon {
-  position: absolute;
-  left: 12px;
-  color: var(--text-muted);
-  pointer-events: none;
-}
-
-.search-bar input {
+.view-toggle {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 8px 12px 8px 36px;
-  font-size: 14px;
-  color: var(--text-primary);
-  width: 240px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
   transition: var(--transition);
+  flex-shrink: 0;
 }
 
-.search-bar input:focus {
-  border-color: var(--accent);
-  outline: none;
-  box-shadow: 0 0 0 3px var(--accent-glow);
+.view-toggle:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .loading-state,
@@ -440,5 +457,15 @@ onMounted(loadVideos)
   line-height: 1.4;
 }
 
+.portrait-mode .content-grid {
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+}
 
+.portrait-mode .card-cover {
+  aspect-ratio: 2 / 3;
+}
+
+.portrait-mode .card-overview {
+  -webkit-line-clamp: 3;
+}
 </style>

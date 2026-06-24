@@ -1,10 +1,10 @@
 <template>
-  <nav class="sidebar">
+  <nav class="sidebar" :class="{ 'platform-mac': isMac }">
     <div class="titlebar-drag"></div>
     <div class="sidebar-header">
       <div class="header-info">
         <span class="logo-text">Fryfrog Hub</span>
-        <span class="server-url">{{ serverDisplay }}</span>
+        <span v-if="connectionStore.showServerAddress" class="server-url">{{ serverDisplay }}</span>
       </div>
     </div>
 
@@ -14,13 +14,13 @@
         <AppIcon name="home" :size="20" />
         首页
       </router-link>
-      <router-link to="/music" class="nav-item" active-class="active">
-        <AppIcon name="music-circle" :size="20" />
-        音乐
-      </router-link>
       <router-link to="/favorites" class="nav-item" active-class="active">
         <AppIcon name="star" :size="20" />
         收藏
+      </router-link>
+      <router-link to="/music" class="nav-item" active-class="active">
+        <AppIcon name="music-circle" :size="20" />
+        音乐
       </router-link>
       <router-link to="/comics" class="nav-item" active-class="active">
         <AppIcon name="book" :size="20" />
@@ -65,6 +65,7 @@ import AppIcon from '@/components/AppIcon.vue'
 
 const connectionStore = useConnectionStore()
 const router = useRouter()
+const isMac = navigator.platform.includes('Mac')
 
 const serverDisplay = computed(() => {
   try {
@@ -83,7 +84,7 @@ function handleDisconnect() {
 
 <style scoped>
 .sidebar {
-  width: 200px;
+  width: 150px;
   background: var(--bg-secondary);
   border-right: 1px solid var(--border);
   display: flex;
@@ -91,16 +92,25 @@ function handleDisconnect() {
   height: 100%;
   overflow-y: auto;
   flex-shrink: 0;
-  padding-top: 36px;
   box-sizing: border-box;
 }
 
+.sidebar.platform-mac {
+  padding-top: 48px;
+}
+
 .titlebar-drag {
+  display: none;
+}
+
+.sidebar.platform-mac .titlebar-drag {
+  display: block;
   position: fixed;
   top: 0;
   left: 0;
-  width: 200px;
+  width: 150px;
   height: 36px;
+  z-index: 10;
   -webkit-app-region: drag;
 }
 
@@ -110,6 +120,10 @@ function handleDisconnect() {
   gap: 12px;
   padding: 16px;
   border-bottom: 1px solid var(--border);
+}
+
+.sidebar.platform-mac .sidebar-header {
+  padding-top: 8px;
 }
 
 .logo-text {
@@ -148,6 +162,7 @@ function handleDisconnect() {
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
+  margin-bottom: 4px;
   border-radius: var(--radius-md);
   color: var(--text-secondary);
   font-size: 14px;

@@ -25,6 +25,19 @@
           </button>
         </div>
       </div>
+      <div class="setting-item">
+        <div class="item-info">
+          <h3 class="item-label">显示服务器地址</h3>
+          <p class="item-description">在侧边栏显示当前连接的服务器地址</p>
+        </div>
+        <button
+          class="toggle-switch"
+          :class="{ active: connectionStore.showServerAddress }"
+          @click="connectionStore.setShowServerAddress(!connectionStore.showServerAddress)"
+        >
+          <span class="toggle-thumb"></span>
+        </button>
+      </div>
     </div>
 
     <div class="settings-section">

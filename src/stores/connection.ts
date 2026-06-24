@@ -8,6 +8,7 @@ const DEFAULT_BACKEND_URL = 'http://localhost:20058'
 
 const authStorageKey = 'fryfrog-auth'
 const backendUrlStorageKey = 'fryfrog-backend-url'
+const showServerAddressStorageKey = 'fryfrog-show-server-address'
 
 function loadSavedAuth(): { username: string; password: string } | null {
   const saved = localStorage.getItem(authStorageKey)
@@ -27,6 +28,7 @@ export const useConnectionStore = defineStore('connection', () => {
   const password = ref(savedAuth?.password || '')
   const isAuthenticated = ref(false)
   const connected = ref(false)
+  const showServerAddress = ref(localStorage.getItem(showServerAddressStorageKey) !== 'false')
 
   function applyBackendConfig() {
     setBackendConfig({ url: backendUrl.value, authenticated: isAuthenticated.value })
@@ -69,15 +71,22 @@ export const useConnectionStore = defineStore('connection', () => {
     localStorage.removeItem(authStorageKey)
   }
 
+  function setShowServerAddress(value: boolean) {
+    showServerAddress.value = value
+    localStorage.setItem(showServerAddressStorageKey, String(value))
+  }
+
   return {
     backendUrl,
     username,
     password,
     isAuthenticated,
     connected,
+    showServerAddress,
     login,
     restoreConnection,
     disconnect,
     setBackendUrl,
+    setShowServerAddress,
   }
 })
