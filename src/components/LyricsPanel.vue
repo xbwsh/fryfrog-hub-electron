@@ -1,7 +1,7 @@
 <template>
   <div class="lyrics-panel" :class="{ 'split-mode': layoutMode === 'split' }">
     <img v-if="playerStore.currentTrack" :src="playerStore.getTrackCoverArt(playerStore.currentTrack, 600)"
-      class="lyrics-bg-image" alt="" />
+      class="lyrics-bg-image" alt="" draggable="false" />
     <div class="lyrics-bg-overlay" ref="bgOverlay"></div>
 
     <div class="top-actions">
@@ -21,7 +21,7 @@
           <div class="vinyl-wrapper">
             <div class="vinyl-disc" :class="{ spinning: playerStore.isPlaying }">
               <img v-if="playerStore.currentTrack"
-                :src="playerStore.getTrackCoverArt(playerStore.currentTrack, 400)" class="vinyl-cover" alt="封面" />
+                :src="playerStore.getTrackCoverArt(playerStore.currentTrack, 400)" class="vinyl-cover" alt="封面" draggable="false" />
               <div class="vinyl-hole"></div>
             </div>
           </div>

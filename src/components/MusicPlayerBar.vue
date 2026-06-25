@@ -3,7 +3,7 @@
     <div class="player-left">
       <div class="track-cover" @click="$emit('toggle-lyrics')">
         <img v-if="playerStore.currentTrack" :src="playerStore.getTrackCoverArt(playerStore.currentTrack, 60)"
-          alt="封面" />
+          alt="封面" draggable="false" />
       </div>
       <div class="track-info">
         <span class="track-title">{{ playerStore.currentTrack.title }}</span>

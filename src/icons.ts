@@ -54,7 +54,7 @@ const general: IconItem[] = [
   { id: 'arrow-up', name: 'Arrow Up', nameCn: '向上', svg: '<polyline points="18,15 12,9 6,15"/>' },
   { id: 'arrow-down', name: 'Arrow Down', nameCn: '向下', svg: '<polyline points="6,9 12,15 18,9"/>' },
   { id: 'fullscreen', name: 'Fullscreen', nameCn: '全屏', svg: '<polyline points="8,3 3,3 3,8"/><polyline points="16,3 21,3 21,8"/><polyline points="21,16 21,21 16,21"/><polyline points="3,16 3,21 8,21"/>' },
-  { id: 'fullscreen-exit', name: 'Exit Fullscreen', nameCn: '退出全屏', svg: '<polyline points="3,8 3,3 8,3"/><polyline points="21,8 21,3 16,3"/><polyline points="16,21 21,21 21,16"/><polyline points="8,21 3,21 3,16"/>' },
+  { id: 'fullscreen-exit', name: 'Exit Fullscreen', nameCn: '退出全屏', svg: '<polyline points="3,8 3,3 8,3"/><polyline points="16,3 21,3 21,8"/><polyline points="21,16 21,21 16,21"/><polyline points="8,21 3,21 3,16"/><polyline points="9,9 15,9 15,15 9,15 9,9"/>' },
   { id: 'split-horizontal', name: 'Split Horizontal', nameCn: '左右分屏', svg: '<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/>' },
   { id: 'split-vertical', name: 'Split Vertical', nameCn: '上下分屏', svg: '<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/>' },
   { id: 'playlist', name: 'Playlist', nameCn: '播放列表', svg: '<line x1="8" y1="5" x2="20" y2="5"/><line x1="8" y1="11" x2="18" y2="11"/><line x1="8" y1="17" x2="16" y2="17"/><circle cx="4.5" cy="16.5" r="1.8"/><line x1="4.5" y1="16.5" x2="4.5" y2="6"/><polyline points="2,7 4.5,5 7,7"/>' },

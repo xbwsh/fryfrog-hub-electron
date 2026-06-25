@@ -41,6 +41,150 @@
     </div>
 
     <div class="settings-section">
+      <div class="section-title">TMDB</div>
+      <div class="setting-item">
+        <div class="item-info">
+          <h3 class="item-label">API Key</h3>
+          <p class="item-description">The Movie Database API 密钥</p>
+        </div>
+        <div class="url-input-group">
+          <input
+            v-model="tmdbApiKey"
+            type="password"
+            class="url-input"
+            placeholder="输入 TMDB API Key"
+            @blur="saveTmdbApiKey"
+          />
+        </div>
+      </div>
+      <div class="setting-item">
+        <div class="item-info">
+          <h3 class="item-label">语言</h3>
+          <p class="item-description">TMDB 元数据语言</p>
+        </div>
+        <select v-model="tmdbLanguage" class="theme-select" @change="saveTmdbSetting('tmdb.language', tmdbLanguage)">
+          <option value="zh-CN">简体中文</option>
+          <option value="en-US">English</option>
+          <option value="ja-JP">日本語</option>
+        </select>
+      </div>
+      <div class="setting-item">
+        <div class="item-info">
+          <h3 class="item-label">图片尺寸</h3>
+          <p class="item-description">TMDB 图片加载尺寸</p>
+        </div>
+        <select v-model="tmdbImageSize" class="theme-select" @change="saveTmdbSetting('tmdb.image-size', tmdbImageSize)">
+          <option value="original">原始</option>
+          <option value="w500">中等</option>
+          <option value="w342">较小</option>
+        </select>
+      </div>
+      <div class="setting-item">
+        <div class="item-info">
+          <h3 class="item-label">自动刮削</h3>
+          <p class="item-description">扫描视频时自动从 TMDB 获取元数据</p>
+        </div>
+        <button
+          class="toggle-switch"
+          :class="{ active: tmdbAutoScrape }"
+          @click="toggleTmdbSetting('tmdb.auto-scrape', tmdbAutoScrape)"
+        >
+          <span class="toggle-thumb"></span>
+        </button>
+      </div>
+      <div class="setting-item">
+        <div class="item-info">
+          <h3 class="item-label">包含成人内容</h3>
+          <p class="item-description">在搜索结果中包含成人内容</p>
+        </div>
+        <button
+          class="toggle-switch"
+          :class="{ active: tmdbIncludeAdult }"
+          @click="toggleTmdbSetting('tmdb.include-adult', tmdbIncludeAdult)"
+        >
+          <span class="toggle-thumb"></span>
+        </button>
+      </div>
+      <div class="setting-item">
+        <div class="item-info">
+          <h3 class="item-label">最低评分</h3>
+          <p class="item-description">自动刮削时的最低评分阈值 ({{ tmdbMinScore }})</p>
+        </div>
+        <input
+          v-model.number="tmdbMinScore"
+          type="range"
+          class="range-input"
+          min="0"
+          max="10"
+          step="0.5"
+          @change="saveTmdbSetting('tmdb.min-score', String(tmdbMinScore))"
+        />
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="section-title">代理</div>
+      <div class="setting-item">
+        <div class="item-info">
+          <h3 class="item-label">地址</h3>
+          <p class="item-description">代理服务器地址（修改后需重启）</p>
+        </div>
+        <input
+          v-model="proxyHost"
+          type="text"
+          class="url-input"
+          placeholder="127.0.0.1"
+          @blur="saveProxySetting('proxy.host', proxyHost)"
+        />
+      </div>
+      <div class="setting-item">
+        <div class="item-info">
+          <h3 class="item-label">端口</h3>
+          <p class="item-description">代理服务器端口（修改后需重启）</p>
+        </div>
+        <input
+          v-model.number="proxyPort"
+          type="number"
+          class="url-input"
+          placeholder="7890"
+          @blur="saveProxySetting('proxy.port', String(proxyPort))"
+        />
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="section-title">漫画</div>
+      <div class="setting-item">
+        <div class="item-info">
+          <h3 class="item-label">自动刮削</h3>
+          <p class="item-description">扫描漫画时自动从 Anilist 获取元数据</p>
+        </div>
+        <button
+          class="toggle-switch"
+          :class="{ active: anilistAutoScrape }"
+          @click="toggleAnilistSetting('anilist.auto-scrape', anilistAutoScrape)"
+        >
+          <span class="toggle-thumb"></span>
+        </button>
+      </div>
+      <div class="setting-item">
+        <div class="item-info">
+          <h3 class="item-label">最低评分</h3>
+          <p class="item-description">自动刮削时的最低评分阈值 ({{ anilistMinScore }})</p>
+        </div>
+        <input
+          v-model.number="anilistMinScore"
+          type="range"
+          class="range-input"
+          min="0"
+          max="10"
+          step="0.5"
+          @change="saveAnilistSetting('anilist.min-score', String(anilistMinScore))"
+        />
+      </div>
+    </div>
+
+    <div class="settings-section">
       <div class="section-title">外观</div>
       <div class="setting-item">
         <div class="item-info">
@@ -91,21 +235,22 @@
         </button>
       </div>
       <div v-if="rescanResult" class="rescan-result">
-        <div class="result-item" v-for="(mod, key) in rescanResult" :key="key">
-          <span class="result-label">{{ moduleLabels[key as keyof typeof moduleLabels] }}</span>
-          <span class="result-detail">清理 {{ mod.cleanedCount }} 条 · {{ mod.scanStatus }}</span>
-        </div>
+        <pre class="result-text">{{ rescanResult }}</pre>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { usePlayerStore } from '@/stores/player'
 import { useThemeStore, type ThemeMode } from '@/stores/theme'
 import { useLibraryStore } from '@/stores/library'
 import { useConnectionStore } from '@/stores/connection'
+import {
+  getSetting,
+  updateSetting,
+} from '@/api/backend'
 
 const playerStore = usePlayerStore()
 const themeStore = useThemeStore()
@@ -122,19 +267,7 @@ function saveBackendUrl() {
 }
 
 const isRescanning = ref(false)
-const rescanResult = ref<{
-  music: { cleanedCount: number; scanStatus: string }
-  comic: { cleanedCount: number; scanStatus: string }
-  ebook: { cleanedCount: number; scanStatus: string }
-  video: { cleanedCount: number; scanStatus: string }
-} | null>(null)
-
-const moduleLabels: Record<string, string> = {
-  music: '音乐',
-  comic: '漫画',
-  ebook: '电子书',
-  video: '视频',
-}
+const rescanResult = ref<string | null>(null)
 
 const themeMode = computed({
   get: () => themeStore.mode,
@@ -142,6 +275,83 @@ const themeMode = computed({
 })
 
 const cachedTrackCount = computed(() => playerStore.downloadedTracks.size)
+
+// TMDB settings
+const tmdbApiKey = ref('')
+const tmdbLanguage = ref('zh-CN')
+const tmdbImageSize = ref('original')
+const tmdbAutoScrape = ref(false)
+const tmdbIncludeAdult = ref(true)
+const tmdbMinScore = ref(0)
+
+// Proxy settings
+const proxyHost = ref('')
+const proxyPort = ref(0)
+
+// Anilist settings
+const anilistAutoScrape = ref(false)
+const anilistMinScore = ref(0)
+
+async function loadSettings() {
+  try {
+    const settings = await Promise.all([
+      getSetting('tmdb.api-key'),
+      getSetting('tmdb.language'),
+      getSetting('tmdb.image-size'),
+      getSetting('tmdb.auto-scrape'),
+      getSetting('tmdb.include-adult'),
+      getSetting('tmdb.min-score'),
+      getSetting('proxy.host'),
+      getSetting('proxy.port'),
+      getSetting('anilist.auto-scrape'),
+      getSetting('anilist.min-score'),
+    ])
+
+    if (settings[0]) tmdbApiKey.value = settings[0].value
+    if (settings[1]) tmdbLanguage.value = settings[1].value
+    if (settings[2]) tmdbImageSize.value = settings[2].value
+    if (settings[3]) tmdbAutoScrape.value = settings[3].value === 'true'
+    if (settings[4]) tmdbIncludeAdult.value = settings[4].value === 'true'
+    if (settings[5]) tmdbMinScore.value = parseFloat(settings[5].value) || 0
+    if (settings[6]) proxyHost.value = settings[6].value
+    if (settings[7]) proxyPort.value = parseInt(settings[7].value) || 0
+    if (settings[8]) anilistAutoScrape.value = settings[8].value === 'true'
+    if (settings[9]) anilistMinScore.value = parseFloat(settings[9].value) || 0
+  } catch (error) {
+    console.error('Failed to load settings:', error)
+  }
+}
+
+async function saveTmdbApiKey() {
+  if (tmdbApiKey.value) {
+    await updateSetting('tmdb.api-key', tmdbApiKey.value)
+  }
+}
+
+async function saveTmdbSetting(key: string, value: string) {
+  await updateSetting(key, value)
+}
+
+async function toggleTmdbSetting(key: string, currentValue: boolean) {
+  const newValue = !currentValue
+  await updateSetting(key, String(newValue))
+  if (key === 'tmdb.auto-scrape') tmdbAutoScrape.value = newValue
+  if (key === 'tmdb.include-adult') tmdbIncludeAdult.value = newValue
+}
+
+async function saveProxySetting(key: string, value: string) {
+  await updateSetting(key, value)
+}
+
+async function saveAnilistSetting(key: string, value: string) {
+  await updateSetting(key, value)
+}
+
+async function toggleAnilistSetting(key: string, currentValue: boolean) {
+  const newValue = !currentValue
+  await updateSetting(key, String(newValue))
+  if (key === 'anilist.auto-scrape') anilistAutoScrape.value = newValue
+}
 
 function toggleDownload() {
   playerStore.setDownloadEnabled(!playerStore.downloadEnabled)
@@ -166,6 +376,10 @@ async function handleRescan() {
     isRescanning.value = false
   }
 }
+
+onMounted(() => {
+  loadSettings()
+})
 </script>
 
 <style scoped>
@@ -357,20 +571,40 @@ async function handleRescan() {
   padding: 12px 0 4px;
 }
 
-.result-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 0;
+.result-text {
+  font-family: var(--font-body);
   font-size: 13px;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  margin: 0;
 }
 
-.result-label {
-  font-weight: 500;
-  color: var(--text-primary);
+.range-input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 120px;
+  height: 4px;
+  background: var(--bg-tertiary);
+  border-radius: 2px;
+  outline: none;
 }
 
-.result-detail {
-  color: var(--text-muted);
+.range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+}
+
+.range-input::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: none;
 }
 </style>

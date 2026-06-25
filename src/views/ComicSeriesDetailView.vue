@@ -27,6 +27,7 @@
             <img
               :src="seriesCoverUrl"
               :alt="series.name"
+              draggable="false"
               @error="onImageError"
             />
           </div>
@@ -36,12 +37,29 @@
           <h1 class="series-name">{{ series.name }}</h1>
           <p class="series-author">{{ series.author }}</p>
           <p class="series-count">{{ series.volumeCount }} 卷</p>
+          <p class="series-meta" v-if="series.serializationStart">连载开始：{{ series.serializationStart }}</p>
+          <p class="series-summary" v-if="series.seriesSummary">{{ series.seriesSummary }}</p>
           <button class="anilist-btn" @click="showAnilistSearch = true">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
             搜索元数据
           </button>
+        </div>
+      </div>
+
+      <div class="characters-section" v-if="characters.length > 0">
+        <h2 class="section-title">角色</h2>
+        <div class="characters-grid" @wheel.prevent="handleCharacterScroll">
+          <div v-for="char in characters" :key="char.id" class="character-card">
+            <img v-if="char.imagePath || char.imageUrl" :src="getComicCharacterImageUrl(char.id)" :alt="char.name" class="character-avatar" draggable="false" @error="onCharacterImageError" />
+            <div v-else class="character-avatar-placeholder"></div>
+            <div class="character-info">
+              <div class="character-name">{{ char.name }}</div>
+              <div class="character-original" v-if="char.originalName">{{ char.originalName }}</div>
+              <div class="character-role" v-if="char.role">{{ char.role }}</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -58,6 +76,7 @@
             <img
               :src="getComicCoverUrlWithCache(comic.id, comic.updatedAt)"
               :alt="comic.title"
+              draggable="false"
               @error="onImageError"
             />
               <div class="volume-badge" v-if="comic.volume">Vol.{{ comic.volume }}</div>
@@ -123,7 +142,7 @@
                 class="anilist-card"
                 :class="{ binding: bindingId === item.id }"
               >
-                <img v-if="item.cover" :src="item.cover" class="anilist-cover" />
+                <img v-if="item.cover" :src="item.cover" class="anilist-cover" draggable="false" />
                 <div class="anilist-info">
                   <div class="anilist-title">{{ item.name_cn || item.name }}</div>
                   <div class="anilist-meta">
@@ -155,6 +174,7 @@
                   v-if="item.coverImage?.medium"
                   :src="item.coverImage.medium"
                   class="anilist-cover"
+                  draggable="false"
                 />
                 <div class="anilist-info">
                   <div class="anilist-title">{{ item.title?.bestTitle || item.title?.romaji || '' }}</div>
@@ -190,8 +210,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import type { ComicSeries, ComicVolume, ComicProgress, AnilistMediaItem, BangumiItem } from '@/types/backend'
-import { getComicSeries, getComicCoverUrl, getComicCoverUrlWithCache, getComicProgress, searchAnilistComics, bindAnilistMetadata, searchBangumiComics, bindBangumiMetadata } from '@/api/backend'
+import type { ComicSeries, ComicVolume, ComicProgress, AnilistMediaItem, BangumiItem, ComicCharacter } from '@/types/backend'
+import { getComicSeries, getComicCoverUrl, getComicCoverUrlWithCache, getComicProgress, searchAnilistComics, bindAnilistMetadata, searchBangumiComics, bindBangumiMetadata, getComicCharacters, getComicCharacterImageUrl } from '@/api/backend'
 
 const router = useRouter()
 const route = useRoute()
@@ -200,6 +220,7 @@ const series = ref<ComicSeries | null>(null)
 const loading = ref(false)
 const error = ref('')
 const comicProgressMap = ref<Map<number, ComicProgress>>(new Map())
+const characters = ref<ComicCharacter[]>([])
 const seriesCoverUrl = computed(() => {
   if (!series.value) return ''
   const first = series.value.comics[0]
@@ -234,6 +255,14 @@ async function loadSeries() {
       return
     }
     await loadAllProgress()
+    try {
+      const firstComic = series.value.comics[0]
+      if (firstComic) {
+        characters.value = await getComicCharacters(firstComic.id)
+      }
+    } catch {
+      // 角色数据获取失败不影响主页面
+    }
   } catch (e) {
     error.value = '加载系列失败'
     console.error('Failed to load series:', e)
@@ -260,6 +289,16 @@ async function loadAllProgress() {
 
 function getComicProgressById(comicId: number): ComicProgress | undefined {
   return comicProgressMap.value.get(comicId)
+}
+
+function handleCharacterScroll(e: WheelEvent) {
+  const container = e.currentTarget as HTMLElement
+  container.scrollLeft += e.deltaY
+}
+
+function onCharacterImageError(e: Event) {
+  const img = e.target as HTMLImageElement
+  img.style.display = 'none'
 }
 
 function viewComic(comic: ComicVolume) {
@@ -433,14 +472,14 @@ onMounted(loadSeries)
   aspect-ratio: 3/4;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  background: linear-gradient(135deg, #3498db, #2980b9);
+  background: var(--bg-tertiary);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 .cover-wrapper img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .info-section {
@@ -464,6 +503,97 @@ onMounted(loadSeries)
 .series-count {
   font-size: 14px;
   color: var(--text-muted);
+}
+
+.series-meta {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+
+.series-summary {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-top: 12px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.characters-section {
+  padding: 0 32px 32px;
+}
+
+.characters-grid {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 4px;
+}
+
+.characters-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.character-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  width: 100px;
+}
+
+.character-avatar {
+  width: 76px;
+  height: 90px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  object-position: top;
+  flex-shrink: 0;
+  background: var(--bg-tertiary);
+  margin-bottom: 8px;
+}
+
+.character-avatar-placeholder {
+  width: 76px;
+  height: 90px;
+  border-radius: var(--radius-md);
+  background: var(--bg-tertiary);
+  flex-shrink: 0;
+  margin-bottom: 8px;
+}
+
+.character-info {
+  min-width: 0;
+  text-align: center;
+  width: 100%;
+}
+
+.character-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.character-original {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.character-role {
+  font-size: 10px;
+  color: var(--accent);
+  margin-top: 2px;
 }
 
 .volumes-section {
@@ -497,17 +627,16 @@ onMounted(loadSeries)
 }
 
 .volume-cover {
-  width: 100%;
-  height: 186px;
+  aspect-ratio: 3/4;
   overflow: hidden;
   position: relative;
-  background: linear-gradient(135deg, #3498db, #2980b9);
+  background: var(--bg-tertiary);
 }
 
 .volume-cover img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .volume-badge {

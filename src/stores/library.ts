@@ -4,7 +4,10 @@ import type { MusicTrack, LibraryRescanResult } from '@/types/backend'
 import {
   getAllTracks,
   getLyrics,
-  rescanLibrary,
+  rescanMusic,
+  rescanComic,
+  rescanVideo,
+  rescanEbook,
 } from '@/api/backend'
 
 export const useLibraryStore = defineStore('library', () => {
@@ -90,12 +93,22 @@ export const useLibraryStore = defineStore('library', () => {
     }
   }
 
-  async function rescan(): Promise<LibraryRescanResult> {
+  async function rescan(): Promise<string> {
     loading.value = true
     error.value = null
     try {
-      const result = await rescanLibrary()
-      return result
+      const results = await Promise.allSettled([
+        rescanMusic(),
+        rescanComic(),
+        rescanVideo(),
+        rescanEbook(),
+      ])
+      const messages = results.map((r, i) => {
+        const modules = ['音乐', '漫画', '视频', '电子书']
+        if (r.status === 'fulfilled') return `${modules[i]}: ${r.value}`
+        return `${modules[i]}: 失败`
+      })
+      return messages.join('\n')
     } catch (e) {
       error.value = '整理媒体库失败'
       throw e

@@ -54,6 +54,7 @@
           <img
             :src="getSeriesCoverUrl(series)"
             :alt="series.name"
+            draggable="false"
             @error="onImageError"
           />
           <div class="card-badge" v-if="series.volumeCount">{{ series.volumeCount }} 卷</div>
@@ -360,13 +361,13 @@ onMounted(loadComics)
   aspect-ratio: 3/4;
   overflow: hidden;
   position: relative;
-  background: linear-gradient(135deg, #3498db, #2980b9);
+  background: var(--bg-tertiary);
 }
 
 .card-cover img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .card-badge {

@@ -93,6 +93,8 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 html, body, #app {
@@ -139,6 +141,7 @@ a {
   color: var(--accent);
   text-decoration: none;
   transition: var(--transition);
+  -webkit-user-drag: none;
 }
 
 a:hover {
@@ -159,6 +162,13 @@ input {
   color: inherit;
   border: none;
   outline: none;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 

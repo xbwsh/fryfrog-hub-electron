@@ -41,6 +41,10 @@ export interface Comic {
   year: number
   genre: string
   summary: string
+  seriesSummary: string | null
+  rating: number | null
+  serializationStart: string | null
+  releaseDate: string | null
   filePath: string
   fileName: string
   fileSize: number
@@ -62,6 +66,9 @@ export interface ComicVolume {
   coverArtPath: string
   filePath: string
   fileName: string
+  rating: number | null
+  summary: string | null
+  releaseDate: string | null
   favorite: boolean
 }
 
@@ -69,6 +76,8 @@ export interface ComicSeries {
   name: string
   author: string
   coverArtPath: string
+  seriesSummary: string | null
+  serializationStart: string | null
   volumeCount: number
   comics: ComicVolume[]
 }
@@ -220,6 +229,17 @@ export interface BangumiItem {
   cover: string
 }
 
+export interface ComicCharacter {
+  id: number
+  name: string
+  originalName: string | null
+  imageUrl: string | null
+  imagePath: string | null
+  description: string | null
+  role: string | null
+  source: string
+}
+
 export interface EbookProgress {
   ebookId: number
   currentChapter: number
@@ -291,4 +311,21 @@ export interface LibraryRescanResult {
   comic: ModuleRescanResult
   ebook: ModuleRescanResult
   video: ModuleRescanResult
+}
+
+export interface SystemSetting {
+  id: number
+  key: string
+  value: string
+  description: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface TmdbStatus {
+  configured: boolean
+  language: string
+  'image-size': string
+  'auto-scrape': boolean
+  'include-adult': boolean
 }

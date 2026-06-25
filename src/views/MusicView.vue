@@ -7,6 +7,10 @@
       </div>
       <div class="header-actions">
         <button class="btn-scrape" :disabled="scrapingAll" @click="handleScrapeAll">
+          <svg v-if="!scrapingAll" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <div v-else class="scrape-spinner"></div>
           {{ scrapingAll ? '刮削中...' : '批量刮削' }}
         </button>
         <ScanDirectoryDialog title="扫描音乐目录" description="输入要扫描的目录路径，支持 mp3、flac、wav 等格式" input-placeholder="例如: /media/music" @scan="handleScan" />
@@ -38,7 +42,7 @@
         @contextmenu="onContextMenu($event, track)"
       >
         <div class="track-cover-small">
-          <img :src="getMusicCoverArtUrl(track.id)" alt="封面" />
+          <img :src="getMusicCoverArtUrl(track.id)" alt="封面" draggable="false" />
         </div>
         <div class="track-playing" v-if="playerStore.currentTrack?.id === track.id && playerStore.isPlaying">
           <div class="eq-bar"></div>
@@ -262,26 +266,42 @@ onUnmounted(() => {
 }
 
 .btn-scrape {
-  background: var(--accent);
-  border: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
   border-radius: var(--radius-md);
-  padding: 8px 16px;
-  font-size: 14px;
-  color: white;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
   transition: var(--transition);
+  white-space: nowrap;
   flex-shrink: 0;
   height: 36px;
   box-sizing: border-box;
 }
 
 .btn-scrape:hover:not(:disabled) {
-  opacity: 0.85;
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
 }
 
 .btn-scrape:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
+}
+
+.scrape-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
 .search-bar {

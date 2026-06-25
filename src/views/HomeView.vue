@@ -39,7 +39,7 @@
         >
           <div v-for="track in musicTracks" :key="track.id" class="content-card" @click="playMusic(track)">
             <div class="card-cover music-cover">
-              <img :src="getMusicCoverArtUrl(track.id)" alt="封面" />
+              <img :src="getMusicCoverArtUrl(track.id)" alt="封面" draggable="false" />
             </div>
             <div class="card-info">
               <span class="card-title">{{ track.title }}</span>
@@ -79,6 +79,9 @@
       <div class="section-header">
         <div class="section-title">
           <h2>漫画</h2>
+          <span v-if="lastReadComic" class="now-playing-hint">
+            最近在看：{{ lastReadComic.title }} · 已阅读 {{ lastReadComicProgress }}%
+          </span>
         </div>
         <router-link to="/comics" class="see-all">查看全部</router-link>
       </div>
@@ -100,7 +103,7 @@
         >
           <div v-for="comic in comics" :key="comic.id" class="content-card" @click="readComic(comic)">
             <div class="card-cover comic-cover">
-              <img :src="getComicCoverUrl(comic.id)" alt="封面" @error="onImageError" />
+              <img :src="getComicCoverUrl(comic.id)" alt="封面" draggable="false" @error="onImageError" />
             </div>
             <div class="card-info">
               <span class="card-title">{{ comic.title }}</span>
@@ -161,7 +164,7 @@
         >
           <div v-for="book in ebooks" :key="book.id" class="content-card" @click="readEbook(book)">
             <div class="card-cover ebook-cover">
-              <img :src="getEbookCoverUrl(book.id)" alt="封面" @error="onImageError" />
+              <img :src="getEbookCoverUrl(book.id)" alt="封面" draggable="false" @error="onImageError" />
             </div>
             <div class="card-info">
               <span class="card-title">{{ book.title }}</span>
@@ -222,7 +225,7 @@
         >
           <div v-for="series in seriesList" :key="series.id" class="content-card" @click="watchVideo(series)">
             <div class="card-cover video-cover">
-              <img :src="series.posterUrl || getSeriesPosterUrl(series.id)" alt="封面" @error="onImageError" />
+              <img :src="series.posterUrl || getSeriesPosterUrl(series.id)" alt="封面" draggable="false" @error="onImageError" />
             </div>
             <div class="card-info">
               <span class="card-title">{{ series.title }}</span>
@@ -263,7 +266,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useConnectionStore } from '@/stores/connection'
 import { usePlayerStore } from '@/stores/player'
@@ -276,8 +279,9 @@ import {
   getComicCoverUrl,
   getEbookCoverUrl,
   getSeriesPosterUrl,
+  getComicProgress,
 } from '@/api/backend'
-import type { MusicTrack, Comic, Ebook, SeriesDTO } from '@/types/backend'
+import type { MusicTrack, Comic, Ebook, SeriesDTO, ComicProgress } from '@/types/backend'
 
 const connectionStore = useConnectionStore()
 const playerStore = usePlayerStore()
@@ -287,6 +291,29 @@ const musicTracks = ref<MusicTrack[]>([])
 const comics = ref<Comic[]>([])
 const ebooks = ref<Ebook[]>([])
 const seriesList = ref<SeriesDTO[]>([])
+const comicProgressMap = ref<Map<number, ComicProgress>>(new Map())
+
+const lastReadComic = computed(() => {
+  let latestComic: Comic | null = null
+  let latestTime = 0
+  for (const comic of comics.value) {
+    const progress = comicProgressMap.value.get(comic.id)
+    if (progress) {
+      const time = new Date(progress.updatedAt).getTime()
+      if (time > latestTime) {
+        latestTime = time
+        latestComic = comic
+      }
+    }
+  }
+  return latestComic
+})
+
+const lastReadComicProgress = computed(() => {
+  if (!lastReadComic.value) return 0
+  const progress = comicProgressMap.value.get(lastReadComic.value.id)
+  return progress ? Math.round(progress.progressPercent) : 0
+})
 
 const musicGrid = ref<HTMLElement | null>(null)
 const comicsGrid = ref<HTMLElement | null>(null)
@@ -348,7 +375,10 @@ onMounted(async () => {
     ])
 
     if (tracks.status === 'fulfilled') musicTracks.value = tracks.value.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    if (comicsData.status === 'fulfilled') comics.value = comicsData.value.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    if (comicsData.status === 'fulfilled') {
+      comics.value = comicsData.value.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      await loadComicProgress()
+    }
     if (ebooksData.status === 'fulfilled') ebooks.value = ebooksData.value.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     if (seriesData.status === 'fulfilled') seriesList.value = seriesData.value.sort((a, b) => (b.year || 0) - (a.year || 0))
 
@@ -361,6 +391,21 @@ onMounted(async () => {
     console.error('Failed to load home data:', error)
   }
 })
+
+async function loadComicProgress() {
+  const map = new Map<number, ComicProgress>()
+  for (const comic of comics.value) {
+    try {
+      const progress = await getComicProgress(comic.id)
+      if (progress && !progress.completed) {
+        map.set(comic.id, progress)
+      }
+    } catch {
+      // ignore
+    }
+  }
+  comicProgressMap.value = map
+}
 
 function playMusic(track: MusicTrack) {
   playerStore.playTrack(track, musicTracks.value)

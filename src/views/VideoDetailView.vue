@@ -13,7 +13,7 @@
     <div v-else-if="series" class="detail-content">
       <div class="hero-section">
         <div class="backdrop">
-          <img v-if="currentDisplayInfo.backdropUrl" :src="currentDisplayInfo.backdropUrl" :alt="currentDisplayInfo.title" @error="onImageError" />
+          <img v-if="currentDisplayInfo.backdropUrl" :src="currentDisplayInfo.backdropUrl" :alt="currentDisplayInfo.title" draggable="false" @error="onImageError" />
           <div class="backdrop-overlay"></div>
         </div>
 
@@ -150,7 +150,7 @@
     <div v-else-if="video" class="detail-content">
       <div class="hero-section">
         <div class="backdrop">
-          <img v-if="video.backdropUrl || video.id" :src="video.backdropUrl || getVideoFanartUrl(video.id)" :alt="video.title" @error="onImageError" />
+          <img v-if="video.backdropUrl || video.id" :src="video.backdropUrl || getVideoFanartUrl(video.id)" :alt="video.title" draggable="false" @error="onImageError" />
           <div class="backdrop-overlay"></div>
         </div>
 
@@ -168,6 +168,7 @@
               :src="video.posterUrl || getVideoPosterUrl(video.id)"
               :alt="video.title"
               class="poster-img"
+              draggable="false"
               @error="onImageError"
             />
             <div v-else class="poster-placeholder">

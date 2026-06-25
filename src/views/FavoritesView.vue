@@ -40,7 +40,7 @@
         @click="openItem(item)"
       >
         <div class="fav-cover">
-          <img :src="getCoverUrl(item)" alt="" @error="onCoverError" />
+          <img :src="getCoverUrl(item)" alt="" draggable="false" @error="onCoverError" />
         </div>
         <div class="fav-info">
           <div class="fav-title">{{ item.title }}</div>
@@ -67,7 +67,7 @@
         @click="openItem(item)"
       >
         <div class="card-cover">
-          <img :src="getCoverUrl(item)" :alt="item.title" @error="onCoverError" />
+          <img :src="getCoverUrl(item)" :alt="item.title" draggable="false" @error="onCoverError" />
           <button
             class="favorite-btn"
             :class="{ active: item.favorite }"

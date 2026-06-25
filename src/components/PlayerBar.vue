@@ -3,7 +3,7 @@
     <div class="player-left">
       <div class="cover-wrapper" @click="toggleLyricsPanel">
         <img v-if="playerStore.currentTrack" :src="playerStore.getTrackCoverArt(playerStore.currentTrack, 60)"
-          class="player-cover" :class="{ rotating: playerStore.isPlaying }" alt="封面" />
+          class="player-cover" :class="{ rotating: playerStore.isPlaying }" alt="封面" draggable="false" />
         <div class="cover-overlay" v-if="currentLyrics">
           <AppIcon name="edit" :size="20" />
         </div>

@@ -197,9 +197,10 @@ function toggleFitMode() {
 }
 
 function toggleDirection() {
+  const current = currentPage.value
   direction.value = direction.value === 'vertical' ? 'horizontal' : 'vertical'
   if (direction.value === 'horizontal') {
-    currentPage.value = 1
+    currentPage.value = current
   } else {
     nextTick(() => scrollToPage(currentPage.value))
   }

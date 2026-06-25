@@ -27,6 +27,7 @@
             <img
               :src="getSeriesCoverUrl(series.coverArtPath)"
               :alt="series.name"
+              draggable="false"
               @error="onImageError"
             />
           </div>
@@ -61,6 +62,7 @@
               <img
                 :src="getEbookCoverUrl(book.id)"
                 :alt="book.title"
+                draggable="false"
                 @error="onImageError"
               />
               <div class="book-badge" v-if="book.format">{{ book.format }}</div>
