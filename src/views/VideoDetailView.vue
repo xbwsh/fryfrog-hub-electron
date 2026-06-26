@@ -76,6 +76,22 @@
                 </svg>
                 从头播放
               </button>
+              <button class="icon-btn scrape-btn" @click="showTmdbSearch = true" title="刮削元数据">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </button>
+              <button class="icon-btn" v-if="series.tmdbId" @click="handleRefreshTmdb" title="刷新元数据" :disabled="refreshing">
+                <svg v-if="!refreshing" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                </svg>
+                <div v-else class="scrape-spinner-small"></div>
+              </button>
+              <button class="icon-btn" v-if="series.tmdbId" @click="handleUnbindTmdb" title="解绑 TMDB">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
               <button class="icon-btn" v-if="series.rating > 0" :title="'评分 ' + series.rating">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="10"/>
@@ -487,11 +503,12 @@ async function handleTmdbSearch() {
 }
 
 async function handleBindTmdb(item: any) {
-  if (!video.value || bindingId.value !== null) return
+  const targetId = video.value?.id || series.value?.episodes[0]?.id
+  if (!targetId || bindingId.value !== null) return
   bindingId.value = item.id
   tmdbSearchError.value = ''
   try {
-    const updated = await bindTmdb(video.value.id, item.id, item.media_type)
+    const updated = await bindTmdb(targetId, item.id, item.media_type)
     if (updated) {
       showTmdbSearch.value = false
       await loadVideo()
@@ -505,10 +522,11 @@ async function handleBindTmdb(item: any) {
 }
 
 async function handleRefreshTmdb() {
-  if (!video.value || refreshing.value) return
+  const targetId = video.value?.id || series.value?.episodes[0]?.id
+  if (!targetId || refreshing.value) return
   refreshing.value = true
   try {
-    const updated = await refreshTmdb(video.value.id)
+    const updated = await refreshTmdb(targetId)
     if (updated) {
       await loadVideo()
     }
@@ -520,10 +538,11 @@ async function handleRefreshTmdb() {
 }
 
 async function handleUnbindTmdb() {
-  if (!video.value) return
+  const targetId = video.value?.id || series.value?.episodes[0]?.id
+  if (!targetId) return
   if (!confirm('确定要解绑 TMDB 元数据吗？')) return
   try {
-    const updated = await unbindTmdb(video.value.id)
+    const updated = await unbindTmdb(targetId)
     if (updated) {
       await loadVideo()
     }
