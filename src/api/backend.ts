@@ -21,6 +21,7 @@ import type {
   SystemSetting,
   TmdbStatus,
   ComicCharacter,
+  VideoActor,
 } from '@/types/backend'
 
 const client = axios.create()
@@ -377,8 +378,8 @@ export async function cleanupVideoRecords(): Promise<Record<string, number>> {
   return response.data.data
 }
 
-export async function getVideoActors(id: number): Promise<string[]> {
-  const response = await client.get<ApiResponse<string[]>>(`/api/v1/video/${id}/actors`)
+export async function getVideoActors(id: number): Promise<VideoActor[]> {
+  const response = await client.get<ApiResponse<VideoActor[]>>(`/api/v1/video/${id}/actors`)
   return response.data.data || []
 }
 

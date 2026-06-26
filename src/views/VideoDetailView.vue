@@ -263,14 +263,18 @@
         <div class="section" v-if="actors.length > 0">
           <h3>演职人员</h3>
           <div class="actor-list">
-            <div class="actor-item" v-for="actor in actors" :key="actor">
-              <div class="actor-avatar">
+            <div class="actor-item" v-for="actor in actors" :key="actor.id">
+              <img v-if="actor.imagePath || actor.imageUrl" :src="getVideoActorImageUrl(actor.id)" :alt="actor.name" class="actor-avatar" draggable="false" @error="onActorImageError" />
+              <div v-else class="actor-avatar-placeholder">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                   <circle cx="12" cy="7" r="4"/>
                 </svg>
               </div>
-              <span class="actor-name">{{ actor }}</span>
+              <div class="actor-info">
+                <span class="actor-name">{{ actor.name }}</span>
+                <span class="actor-character" v-if="actor.character">{{ actor.character }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -333,7 +337,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import type { VideoDTO, SeriesDTO } from '@/types/backend'
+import type { VideoDTO, SeriesDTO, VideoActor } from '@/types/backend'
 import { getVideoById, getSeriesById, toggleVideoFavorite, getVideoPosterUrl, getVideoFanartUrl, getSeriesPosterUrl, getSeriesFanartUrl, deleteVideoProgress, getVideoActors } from '@/api/backend'
 import VideoPlayer from '@/views/VideoPlayer.vue'
 
@@ -345,7 +349,7 @@ const series = ref<SeriesDTO | null>(null)
 const loading = ref(false)
 const error = ref('')
 const showPlayer = ref(false)
-const actors = ref<string[]>([])
+const actors = ref<VideoActor[]>([])
 
 async function loadVideo() {
   const id = Number(route.params.id)
@@ -369,7 +373,7 @@ async function loadVideo() {
       try {
         actors.value = await getVideoActors(id)
       } catch {
-        actors.value = data.actors ? data.actors.split(/[,，、]/).map(a => a.trim()).filter(Boolean) : []
+        actors.value = []
       }
     } else {
       error.value = '视频不存在'
@@ -428,6 +432,15 @@ function formatFileSize(bytes: number): string {
 }
 
 function onImageError(e: Event) {
+  (e.target as HTMLImageElement).style.display = 'none'
+}
+
+function getVideoActorImageUrl(actorId: number): string {
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || ''
+  return `${baseUrl}/api/v1/video/actor/${actorId}/image`
+}
+
+function onActorImageError(e: Event) {
   (e.target as HTMLImageElement).style.display = 'none'
 }
 
@@ -791,7 +804,8 @@ onMounted(loadVideo)
   width: 80px;
 }
 
-.actor-avatar {
+.actor-avatar,
+.actor-avatar-placeholder {
   width: 64px;
   height: 64px;
   border-radius: 50%;
@@ -800,6 +814,18 @@ onMounted(loadVideo)
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
+  overflow: hidden;
+}
+
+.actor-avatar {
+  object-fit: cover;
+}
+
+.actor-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
 
 .actor-name {
@@ -807,6 +833,12 @@ onMounted(loadVideo)
   color: var(--text-secondary);
   text-align: center;
   word-break: break-all;
+}
+
+.actor-character {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
 }
 
 .file-card,

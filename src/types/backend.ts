@@ -240,6 +240,16 @@ export interface ComicCharacter {
   source: string
 }
 
+export interface VideoActor {
+  id: number
+  videoId: number
+  name: string
+  character: string | null
+  imagePath: string | null
+  imageUrl: string | null
+  sourceActorId: number | null
+}
+
 export interface EbookProgress {
   ebookId: number
   currentChapter: number
