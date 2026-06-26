@@ -165,11 +165,13 @@ function viewSeries(series: ComicSeries) {
 }
 
 function getSeriesCoverUrl(series: ComicSeries): string {
+  if (series.coverArtPath) {
+    if (series.coverArtPath.startsWith('http')) return series.coverArtPath
+    return `/api/v1/comic/cover-image?path=${encodeURIComponent(series.coverArtPath)}`
+  }
   const first = series.comics[0]
   if (first) return getComicCoverUrlWithCache(first.id, first.updatedAt)
-  if (!series.coverArtPath) return ''
-  if (series.coverArtPath.startsWith('http')) return series.coverArtPath
-  return `/api/v1/comic/cover-image?path=${encodeURIComponent(series.coverArtPath)}`
+  return ''
 }
 
 function onImageError(e: Event) {

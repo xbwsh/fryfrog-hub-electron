@@ -223,9 +223,12 @@ const comicProgressMap = ref<Map<number, ComicProgress>>(new Map())
 const characters = ref<ComicCharacter[]>([])
 const seriesCoverUrl = computed(() => {
   if (!series.value) return ''
+  if (series.value.coverArtPath) {
+    return getSeriesCoverUrl(series.value.coverArtPath)
+  }
   const first = series.value.comics[0]
   if (first) return getComicCoverUrl(first.id)
-  return getSeriesCoverUrl(series.value.coverArtPath)
+  return ''
 })
 const showAnilistSearch = ref(false)
 const searchSource = ref<'bangumi' | 'anilist'>('bangumi')
