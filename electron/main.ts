@@ -26,7 +26,16 @@ function createWindow(): void {
 
   mainWindow.on('ready-to-show', () => {
     mainWindow?.show()
-    mainWindow?.webContents.openDevTools()
+  })
+
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (
+      input.key === 'F12' ||
+      (input.control && input.shift && ['I', 'J', 'C'].includes(input.key)) ||
+      (input.meta && input.alt && input.key === 'I')
+    ) {
+      event.preventDefault()
+    }
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
