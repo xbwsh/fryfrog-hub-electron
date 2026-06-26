@@ -377,6 +377,11 @@ export async function cleanupVideoRecords(): Promise<Record<string, number>> {
   return response.data.data
 }
 
+export async function getVideoActors(id: number): Promise<string[]> {
+  const response = await client.get<ApiResponse<string[]>>(`/api/v1/video/${id}/actors`)
+  return response.data.data || []
+}
+
 export async function checkTmdbStatus(): Promise<boolean> {
   const response = await client.get<ApiResponse<boolean>>('/api/v1/video/tmdb/status')
   return response.data.data
