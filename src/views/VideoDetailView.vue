@@ -229,6 +229,22 @@
                 </svg>
                 从头播放
               </button>
+              <button class="icon-btn scrape-btn" @click="showTmdbSearch = true" title="刮削元数据">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </button>
+              <button class="icon-btn" v-if="video.tmdbId" @click="handleRefreshTmdb" title="刷新元数据" :disabled="refreshing">
+                <svg v-if="!refreshing" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                </svg>
+                <div v-else class="scrape-spinner-small"></div>
+              </button>
+              <button class="icon-btn" v-if="video.tmdbId" @click="handleUnbindTmdb" title="解绑 TMDB">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
               <button
                 class="icon-btn"
                 :class="{ active: video.favorite }"
@@ -331,6 +347,64 @@
       :video-title="currentPlayVideo.title"
       @close="showPlayer = false"
     />
+
+    <Teleport to="body">
+      <div v-if="showTmdbSearch" class="modal-overlay" @click.self="showTmdbSearch = false">
+        <div class="tmdb-modal">
+          <div class="modal-header">
+            <h2>搜索 TMDB 元数据</h2>
+            <button class="modal-close" @click="showTmdbSearch = false">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="search-row">
+              <input
+                v-model="tmdbSearchQuery"
+                class="tmdb-input"
+                :placeholder="`搜索 ${video?.title || ''}...`"
+                @keydown.enter="handleTmdbSearch"
+              />
+              <button class="search-btn" :disabled="tmdbSearching || !tmdbSearchQuery.trim()" @click="handleTmdbSearch">
+                {{ tmdbSearching ? '搜索中...' : '搜索' }}
+              </button>
+            </div>
+
+            <div v-if="tmdbSearchError" class="tmdb-error">{{ tmdbSearchError }}</div>
+
+            <div v-if="tmdbResults.length > 0" class="tmdb-results">
+              <div
+                v-for="item in tmdbResults"
+                :key="item.id"
+                class="tmdb-card"
+                :class="{ binding: bindingId === item.id }"
+              >
+                <img v-if="item.poster_path" :src="`https://image.tmdb.org/t/p/w200${item.poster_path}`" class="tmdb-poster" draggable="false" />
+                <div v-else class="tmdb-poster-placeholder"></div>
+                <div class="tmdb-info">
+                  <div class="tmdb-title">{{ item.title || item.name }}</div>
+                  <div class="tmdb-meta">
+                    <span v-if="item.release_date || item.first_air_date">{{ (item.release_date || item.first_air_date)?.substring(0, 4) }}</span>
+                    <span v-if="item.vote_average">评分 {{ item.vote_average.toFixed(1) }}</span>
+                    <span class="tmdb-type">{{ item.media_type === 'tv' ? '电视剧' : '电影' }}</span>
+                  </div>
+                  <div class="tmdb-overview" v-if="item.overview">{{ item.overview.substring(0, 100) }}...</div>
+                </div>
+                <button
+                  class="bind-btn"
+                  :disabled="bindingId !== null"
+                  @click="handleBindTmdb(item)"
+                >
+                  {{ bindingId === item.id ? '绑定中...' : '绑定' }}
+                </button>
+              </div>
+            </div>
+
+            <div v-else-if="tmdbSearched && !tmdbSearching" class="tmdb-empty">
+              未找到相关结果
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -338,7 +412,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { VideoDTO, SeriesDTO, VideoActor } from '@/types/backend'
-import { getVideoById, getSeriesById, toggleVideoFavorite, getVideoPosterUrl, getVideoFanartUrl, getSeriesPosterUrl, getSeriesFanartUrl, deleteVideoProgress, getVideoActors } from '@/api/backend'
+import { getVideoById, getSeriesById, toggleVideoFavorite, getVideoPosterUrl, getVideoFanartUrl, getSeriesPosterUrl, getSeriesFanartUrl, deleteVideoProgress, getVideoActors, searchTmdb, bindTmdb, refreshTmdb, unbindTmdb } from '@/api/backend'
 import VideoPlayer from '@/views/VideoPlayer.vue'
 
 const router = useRouter()
@@ -350,6 +424,16 @@ const loading = ref(false)
 const error = ref('')
 const showPlayer = ref(false)
 const actors = ref<VideoActor[]>([])
+
+// TMDB search
+const showTmdbSearch = ref(false)
+const tmdbSearchQuery = ref('')
+const tmdbResults = ref<any[]>([])
+const tmdbSearching = ref(false)
+const tmdbSearched = ref(false)
+const tmdbSearchError = ref('')
+const bindingId = ref<number | null>(null)
+const refreshing = ref(false)
 
 async function loadVideo() {
   const id = Number(route.params.id)
@@ -383,6 +467,68 @@ async function loadVideo() {
     console.error('Failed to load video:', e)
   } finally {
     loading.value = false
+  }
+}
+
+async function handleTmdbSearch() {
+  if (!tmdbSearchQuery.value.trim()) return
+  tmdbSearching.value = true
+  tmdbSearchError.value = ''
+  tmdbSearched.value = false
+  try {
+    tmdbResults.value = await searchTmdb(tmdbSearchQuery.value.trim())
+    tmdbSearched.value = true
+  } catch (e) {
+    tmdbSearchError.value = '搜索失败'
+    console.error('TMDB search failed:', e)
+  } finally {
+    tmdbSearching.value = false
+  }
+}
+
+async function handleBindTmdb(item: any) {
+  if (!video.value || bindingId.value !== null) return
+  bindingId.value = item.id
+  tmdbSearchError.value = ''
+  try {
+    const updated = await bindTmdb(video.value.id, item.id, item.media_type)
+    if (updated) {
+      showTmdbSearch.value = false
+      await loadVideo()
+    }
+  } catch (e) {
+    tmdbSearchError.value = '绑定失败'
+    console.error('Bind TMDB failed:', e)
+  } finally {
+    bindingId.value = null
+  }
+}
+
+async function handleRefreshTmdb() {
+  if (!video.value || refreshing.value) return
+  refreshing.value = true
+  try {
+    const updated = await refreshTmdb(video.value.id)
+    if (updated) {
+      await loadVideo()
+    }
+  } catch (e) {
+    console.error('Refresh TMDB failed:', e)
+  } finally {
+    refreshing.value = false
+  }
+}
+
+async function handleUnbindTmdb() {
+  if (!video.value) return
+  if (!confirm('确定要解绑 TMDB 元数据吗？')) return
+  try {
+    const updated = await unbindTmdb(video.value.id)
+    if (updated) {
+      await loadVideo()
+    }
+  } catch (e) {
+    console.error('Unbind TMDB failed:', e)
   }
 }
 
@@ -523,8 +669,218 @@ onMounted(loadVideo)
   animation: spin 1s linear infinite;
 }
 
+.scrape-spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.tmdb-modal {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.modal-close:hover {
+  color: var(--text-primary);
+}
+
+.modal-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.search-row {
+  display: flex;
+  gap: 8px;
+}
+
+.tmdb-input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+}
+
+.tmdb-input:focus {
+  border-color: var(--accent);
+}
+
+.search-btn {
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: white;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.search-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.search-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.tmdb-error {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  font-size: 13px;
+}
+
+.tmdb-results {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tmdb-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  transition: var(--transition);
+}
+
+.tmdb-card.binding {
+  opacity: 0.6;
+}
+
+.tmdb-poster {
+  width: 50px;
+  height: 75px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.tmdb-poster-placeholder {
+  width: 50px;
+  height: 75px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.tmdb-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.tmdb-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.tmdb-meta {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.tmdb-type {
+  color: var(--accent);
+}
+
+.tmdb-overview {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.bind-btn {
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: white;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.bind-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.bind-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.tmdb-empty {
+  margin-top: 24px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
 }
 
 .error-state button {
