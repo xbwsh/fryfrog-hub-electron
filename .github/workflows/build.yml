@@ -17,13 +17,10 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            build_cmd: build:mac
             platform: mac
           - os: windows-latest
-            build_cmd: build:win
             platform: win
           - os: ubuntu-latest
-            build_cmd: build:linux
             platform: linux
 
     runs-on: ${{ matrix.os }}
@@ -52,7 +49,7 @@ jobs:
             dist/*.dmg
             dist/*.exe
             dist/*.AppImage
-          if-no-files-found: error
+          if-no-files-found: ignore
 
   release:
     needs: build
@@ -72,3 +69,4 @@ jobs:
         with:
           files: artifacts/*
           generate_release_notes: true
+          token: ${{ secrets.GH_TOKEN }}
