@@ -118,13 +118,6 @@ export async function scrapeTrack(id: number): Promise<MusicTrack | undefined> {
   return response.data.data
 }
 
-export async function scrapeByArtist(artist: string): Promise<MusicTrack[]> {
-  const response = await client.post<ApiResponse<MusicTrack[]>>('/api/v1/music/scrape/artist', null, {
-    params: { artist },
-  })
-  return response.data.data || []
-}
-
 export async function scrapeAllTracks(): Promise<MusicTrack[]> {
   const response = await client.post<ApiResponse<MusicTrack[]>>('/api/v1/music/scrape/all')
   return response.data.data || []
@@ -398,6 +391,21 @@ export async function searchTmdb(query: string): Promise<TmdbSearchItem[]> {
 
 export async function bindTmdb(id: number, tmdbId: number, mediaType: string): Promise<VideoDTO | undefined> {
   const response = await client.post<ApiResponse<VideoDTO>>(`/api/v1/video/${id}/tmdb/bind`, { tmdbId, mediaType })
+  return response.data.data
+}
+
+export async function refreshTmdb(id: number): Promise<VideoDTO | undefined> {
+  const response = await client.post<ApiResponse<VideoDTO>>(`/api/v1/video/${id}/tmdb/refresh`)
+  return response.data.data
+}
+
+export async function unbindTmdb(id: number): Promise<VideoDTO | undefined> {
+  const response = await client.post<ApiResponse<VideoDTO>>(`/api/v1/video/${id}/tmdb/unbind`)
+  return response.data.data
+}
+
+export async function organizeVideo(): Promise<string> {
+  const response = await client.post<ApiResponse<string>>('/api/v1/video/organize')
   return response.data.data
 }
 
