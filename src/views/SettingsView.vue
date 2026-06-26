@@ -350,6 +350,19 @@
       <div class="section-title">媒体库</div>
       <div class="setting-item">
         <div class="item-info">
+          <h3 class="item-label">定时扫描</h3>
+          <p class="item-description">macOS 用户建议开启，每 60 秒自动扫描文件变更</p>
+        </div>
+        <button
+          class="toggle-switch"
+          :class="{ active: periodicScan }"
+          @click="toggleWatcherSetting('watcher.periodic-scan', periodicScan)"
+        >
+          <span class="toggle-thumb"></span>
+        </button>
+      </div>
+      <div class="setting-item">
+        <div class="item-info">
           <h3 class="item-label">一键整理</h3>
           <p class="item-description">清理无效记录并扫描新文件（音乐、漫画、电子书、视频）</p>
         </div>
@@ -428,6 +441,9 @@ const musicDefaultArtist = ref('')
 const musicLyricsFallback = ref(true)
 const musicCoverFallback = ref(true)
 
+// Watcher settings
+const periodicScan = ref(false)
+
 async function loadSettings() {
   try {
     const settings = await Promise.all([
@@ -450,6 +466,7 @@ async function loadSettings() {
       getSetting('music.default-artist'),
       getSetting('music.scrape.lyrics-fallback'),
       getSetting('music.scrape.cover-fallback'),
+      getSetting('watcher.periodic-scan'),
     ])
 
     if (settings[0]) tmdbApiKey.value = settings[0].value
@@ -471,6 +488,7 @@ async function loadSettings() {
     if (settings[16]) musicDefaultArtist.value = settings[16].value
     if (settings[17]) musicLyricsFallback.value = settings[17].value !== 'false'
     if (settings[18]) musicCoverFallback.value = settings[18].value !== 'false'
+    if (settings[19]) periodicScan.value = settings[19].value === 'true'
   } catch (error) {
     console.error('Failed to load settings:', error)
   }
@@ -541,6 +559,12 @@ function clearCache() {
     playerStore.downloadedTracks = new Map()
     localStorage.removeItem('downloadedTracks')
   }
+}
+
+async function toggleWatcherSetting(key: string, currentValue: boolean) {
+  const newValue = !currentValue
+  await updateSetting(key, String(newValue))
+  if (key === 'watcher.periodic-scan') periodicScan.value = newValue
 }
 
 async function handleRescan() {
