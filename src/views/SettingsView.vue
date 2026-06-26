@@ -157,7 +157,35 @@
       <div class="setting-item">
         <div class="item-info">
           <h3 class="item-label">自动刮削</h3>
-          <p class="item-description">扫描漫画时自动从 Anilist 获取元数据</p>
+          <p class="item-description">扫描漫画时自动从 Bangumi/AniList 获取元数据</p>
+        </div>
+        <button
+          class="toggle-switch"
+          :class="{ active: comicAutoScrape }"
+          @click="toggleComicSetting('comic.auto-scrape', comicAutoScrape)"
+        >
+          <span class="toggle-thumb"></span>
+        </button>
+      </div>
+      <div class="setting-item">
+        <div class="item-info">
+          <h3 class="item-label">最低评分</h3>
+          <p class="item-description">漫画刮削最低评分 ({{ comicMinScore }})</p>
+        </div>
+        <input
+          v-model.number="comicMinScore"
+          type="range"
+          class="range-input"
+          min="0"
+          max="10"
+          step="0.5"
+          @change="saveComicSetting('comic.min-score', String(comicMinScore))"
+        />
+      </div>
+      <div class="setting-item">
+        <div class="item-info">
+          <h3 class="item-label">AniList 自动刮削</h3>
+          <p class="item-description">扫描漫画时自动从 AniList 获取元数据</p>
         </div>
         <button
           class="toggle-switch"
@@ -169,8 +197,8 @@
       </div>
       <div class="setting-item">
         <div class="item-info">
-          <h3 class="item-label">最低评分</h3>
-          <p class="item-description">自动刮削时的最低评分阈值 ({{ anilistMinScore }})</p>
+          <h3 class="item-label">AniList 最低评分</h3>
+          <p class="item-description">AniList 自动刮削最低评分 ({{ anilistMinScore }})</p>
         </div>
         <input
           v-model.number="anilistMinScore"
@@ -181,6 +209,101 @@
           step="0.5"
           @change="saveAnilistSetting('anilist.min-score', String(anilistMinScore))"
         />
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="section-title">音乐</div>
+      <div class="setting-item">
+        <div class="item-info">
+          <h3 class="item-label">刮削总开关</h3>
+          <p class="item-description">启用或禁用音乐刮削功能</p>
+        </div>
+        <button
+          class="toggle-switch"
+          :class="{ active: musicScrapeEnabled }"
+          @click="toggleMusicSetting('music.scrape.enabled', musicScrapeEnabled)"
+        >
+          <span class="toggle-thumb"></span>
+        </button>
+      </div>
+      <div class="setting-item">
+        <div class="item-info">
+          <h3 class="item-label">自动刮削</h3>
+          <p class="item-description">扫描音乐时自动刮削歌词和封面</p>
+        </div>
+        <button
+          class="toggle-switch"
+          :class="{ active: musicAutoScrape }"
+          @click="toggleMusicSetting('music.scrape.auto-scrape', musicAutoScrape)"
+        >
+          <span class="toggle-thumb"></span>
+        </button>
+      </div>
+      <div class="setting-item">
+        <div class="item-info">
+          <h3 class="item-label">元数据回写</h3>
+          <p class="item-description">将刮削到的元数据写回音频文件</p>
+        </div>
+        <button
+          class="toggle-switch"
+          :class="{ active: musicAutoWriteback }"
+          @click="toggleMusicSetting('music.auto-writeback', musicAutoWriteback)"
+        >
+          <span class="toggle-thumb"></span>
+        </button>
+      </div>
+      <div class="setting-item">
+        <div class="item-info">
+          <h3 class="item-label">按文件夹整理</h3>
+          <p class="item-description">按艺术家文件夹结构整理音乐</p>
+        </div>
+        <button
+          class="toggle-switch"
+          :class="{ active: musicUseFolderStructure }"
+          @click="toggleMusicSetting('music.use-folder-structure', musicUseFolderStructure)"
+        >
+          <span class="toggle-thumb"></span>
+        </button>
+      </div>
+      <div class="setting-item">
+        <div class="item-info">
+          <h3 class="item-label">未知艺术家名</h3>
+          <p class="item-description">未知艺术家的默认显示名称</p>
+        </div>
+        <input
+          v-model="musicDefaultArtist"
+          type="text"
+          class="url-input"
+          placeholder="未知艺术家"
+          @blur="saveMusicSetting('music.default-artist', musicDefaultArtist)"
+        />
+      </div>
+      <div class="setting-item">
+        <div class="item-info">
+          <h3 class="item-label">歌词源回退</h3>
+          <p class="item-description">主歌词源失败时尝试其他源</p>
+        </div>
+        <button
+          class="toggle-switch"
+          :class="{ active: musicLyricsFallback }"
+          @click="toggleMusicSetting('music.scrape.lyrics-fallback', musicLyricsFallback)"
+        >
+          <span class="toggle-thumb"></span>
+        </button>
+      </div>
+      <div class="setting-item">
+        <div class="item-info">
+          <h3 class="item-label">封面源回退</h3>
+          <p class="item-description">主封面源失败时尝试其他源</p>
+        </div>
+        <button
+          class="toggle-switch"
+          :class="{ active: musicCoverFallback }"
+          @click="toggleMusicSetting('music.scrape.cover-fallback', musicCoverFallback)"
+        >
+          <span class="toggle-thumb"></span>
+        </button>
       </div>
     </div>
 
@@ -292,6 +415,19 @@ const proxyPort = ref(0)
 const anilistAutoScrape = ref(false)
 const anilistMinScore = ref(0)
 
+// Comic settings
+const comicAutoScrape = ref(false)
+const comicMinScore = ref(0)
+
+// Music settings
+const musicScrapeEnabled = ref(true)
+const musicAutoScrape = ref(false)
+const musicAutoWriteback = ref(true)
+const musicUseFolderStructure = ref(true)
+const musicDefaultArtist = ref('')
+const musicLyricsFallback = ref(true)
+const musicCoverFallback = ref(true)
+
 async function loadSettings() {
   try {
     const settings = await Promise.all([
@@ -305,6 +441,15 @@ async function loadSettings() {
       getSetting('proxy.port'),
       getSetting('anilist.auto-scrape'),
       getSetting('anilist.min-score'),
+      getSetting('comic.auto-scrape'),
+      getSetting('comic.min-score'),
+      getSetting('music.scrape.enabled'),
+      getSetting('music.scrape.auto-scrape'),
+      getSetting('music.auto-writeback'),
+      getSetting('music.use-folder-structure'),
+      getSetting('music.default-artist'),
+      getSetting('music.scrape.lyrics-fallback'),
+      getSetting('music.scrape.cover-fallback'),
     ])
 
     if (settings[0]) tmdbApiKey.value = settings[0].value
@@ -317,6 +462,15 @@ async function loadSettings() {
     if (settings[7]) proxyPort.value = parseInt(settings[7].value) || 0
     if (settings[8]) anilistAutoScrape.value = settings[8].value === 'true'
     if (settings[9]) anilistMinScore.value = parseFloat(settings[9].value) || 0
+    if (settings[10]) comicAutoScrape.value = settings[10].value === 'true'
+    if (settings[11]) comicMinScore.value = parseFloat(settings[11].value) || 0
+    if (settings[12]) musicScrapeEnabled.value = settings[12].value !== 'false'
+    if (settings[13]) musicAutoScrape.value = settings[13].value === 'true'
+    if (settings[14]) musicAutoWriteback.value = settings[14].value !== 'false'
+    if (settings[15]) musicUseFolderStructure.value = settings[15].value !== 'false'
+    if (settings[16]) musicDefaultArtist.value = settings[16].value
+    if (settings[17]) musicLyricsFallback.value = settings[17].value !== 'false'
+    if (settings[18]) musicCoverFallback.value = settings[18].value !== 'false'
   } catch (error) {
     console.error('Failed to load settings:', error)
   }
@@ -351,6 +505,31 @@ async function toggleAnilistSetting(key: string, currentValue: boolean) {
   const newValue = !currentValue
   await updateSetting(key, String(newValue))
   if (key === 'anilist.auto-scrape') anilistAutoScrape.value = newValue
+}
+
+async function saveComicSetting(key: string, value: string) {
+  await updateSetting(key, value)
+}
+
+async function toggleComicSetting(key: string, currentValue: boolean) {
+  const newValue = !currentValue
+  await updateSetting(key, String(newValue))
+  if (key === 'comic.auto-scrape') comicAutoScrape.value = newValue
+}
+
+async function saveMusicSetting(key: string, value: string) {
+  await updateSetting(key, value)
+}
+
+async function toggleMusicSetting(key: string, currentValue: boolean) {
+  const newValue = !currentValue
+  await updateSetting(key, String(newValue))
+  if (key === 'music.scrape.enabled') musicScrapeEnabled.value = newValue
+  if (key === 'music.scrape.auto-scrape') musicAutoScrape.value = newValue
+  if (key === 'music.auto-writeback') musicAutoWriteback.value = newValue
+  if (key === 'music.use-folder-structure') musicUseFolderStructure.value = newValue
+  if (key === 'music.scrape.lyrics-fallback') musicLyricsFallback.value = newValue
+  if (key === 'music.scrape.cover-fallback') musicCoverFallback.value = newValue
 }
 
 function toggleDownload() {
