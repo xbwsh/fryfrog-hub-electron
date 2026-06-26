@@ -47,6 +47,7 @@
         :data-page="page.pageNum"
       >
         <img
+          loading="lazy"
           :src="getComicPageImageUrl(comicId, page.pageNum)"
           :alt="`第${page.pageNum}页`"
           :class="['page-image', fitMode]"

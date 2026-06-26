@@ -33,6 +33,11 @@ export default defineConfig({
         input: {
           index: resolve(__dirname, 'index.html'),
         },
+        output: {
+          manualChunks: {
+            'vendor-vue': ['vue', 'vue-router', 'pinia'],
+          },
+        },
       },
     },
     resolve: {

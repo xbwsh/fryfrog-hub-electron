@@ -17,7 +17,7 @@
             <line x1="12" y1="18" x2="12" y2="18.01"/>
           </svg>
         </button>
-        <SearchBar v-model="searchQuery" placeholder="搜索视频..." @input="handleSearch" />
+        <SearchBar v-model="searchQuery" placeholder="搜索视频..." @debounced="handleSearch" />
       </div>
     </div>
 

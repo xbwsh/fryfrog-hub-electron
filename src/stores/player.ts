@@ -12,7 +12,6 @@ export const usePlayerStore = defineStore('player', () => {
   const isPlaying = ref(false)
   const volume = ref(0.8)
   const playMode = ref<'order' | 'shuffle' | 'repeat_all' | 'repeat_one'>('order')
-  const currentObjectUrl = ref<string | null>(null)
   const downloadEnabled = ref(false)
   const downloadedTracks = ref<Map<string, string>>(new Map())
   const currentTime = ref(0)
@@ -101,16 +100,8 @@ export const usePlayerStore = defineStore('player', () => {
       try {
         audio.value.pause()
         audio.value.currentTime = 0
-        
-        if (currentObjectUrl.value) {
-          URL.revokeObjectURL(currentObjectUrl.value)
-          currentObjectUrl.value = null
-        }
-        
-        let streamUrl: string
-        streamUrl = getStreamUrl(track.id as number)
 
-        audio.value.src = streamUrl
+        audio.value.src = getStreamUrl(track.id as number)
         audio.value.load()
         isPlaying.value = true
         await audio.value.play()
@@ -232,10 +223,6 @@ export const usePlayerStore = defineStore('player', () => {
         }
       }
     } else {
-      if (currentObjectUrl.value) {
-        URL.revokeObjectURL(currentObjectUrl.value)
-        currentObjectUrl.value = null
-      }
       nextTrack()
     }
   }

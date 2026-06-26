@@ -6,7 +6,7 @@
         <p class="view-subtitle">管理你的音乐库</p>
       </div>
       <div class="header-actions">
-        <SearchBar v-model="searchQuery" placeholder="搜索音乐..." @input="handleSearch" />
+        <SearchBar v-model="searchQuery" placeholder="搜索音乐..." @debounced="handleSearch" />
       </div>
     </div>
 
@@ -34,7 +34,7 @@
         @contextmenu="onContextMenu($event, track)"
       >
         <div class="track-cover-small">
-          <img :src="getMusicCoverArtUrl(track.id)" alt="封面" draggable="false" />
+          <img loading="lazy" :src="getMusicCoverArtUrl(track.id)" alt="封面" draggable="false" />
         </div>
         <div class="track-playing" v-if="playerStore.currentTrack?.id === track.id && playerStore.isPlaying">
           <div class="eq-bar"></div>

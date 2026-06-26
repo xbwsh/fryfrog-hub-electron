@@ -119,7 +119,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, defineAsyncComponent, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import type { MusicTrack, Comic, Ebook, VideoDTO } from '@/types/backend'
 import {
@@ -139,7 +139,7 @@ import {
 import { usePlayerStore } from '@/stores/player'
 import MusicPlayerBar from '@/components/MusicPlayerBar.vue'
 import LyricsPanel from '@/components/LyricsPanel.vue'
-import EbookReader from '@/views/EbookReader.vue'
+const EbookReader = defineAsyncComponent(() => import('@/views/EbookReader.vue'))
 
 type FavItem = (MusicTrack | Comic | Ebook | VideoDTO) & { _type: string }
 

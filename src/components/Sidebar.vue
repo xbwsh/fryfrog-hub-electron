@@ -1,6 +1,19 @@
 <template>
   <nav class="sidebar" :class="{ 'platform-mac': isMac }">
-    <div class="titlebar-drag"></div>
+    <div class="titlebar-area">
+      <div class="traffic-lights" v-if="!isMac">
+        <button class="traffic-light traffic-close" @click="windowClose" title="关闭">
+          <svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 1l6 6M7 1l-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </button>
+        <button class="traffic-light traffic-minimize" @click="windowMinimize" title="最小化">
+          <svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 4h6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </button>
+        <button class="traffic-light traffic-maximize" @click="windowMaximize" title="最大化">
+          <svg width="8" height="8" viewBox="0 0 8 8"><rect x="1" y="1" width="6" height="6" rx="0.5" stroke="currentColor" stroke-width="1" fill="none"/></svg>
+        </button>
+      </div>
+      <div class="titlebar-drag"></div>
+    </div>
     <div class="sidebar-header">
       <div class="header-info">
         <span class="logo-text">Fryfrog Hub</span>
@@ -76,6 +89,10 @@ const serverDisplay = computed(() => {
   }
 })
 
+function windowMinimize() { window.electronAPI?.windowMinimize() }
+function windowMaximize() { window.electronAPI?.windowMaximize() }
+function windowClose() { window.electronAPI?.windowClose() }
+
 function handleDisconnect() {
   connectionStore.disconnect()
   router.push('/')
@@ -95,22 +112,69 @@ function handleDisconnect() {
   box-sizing: border-box;
 }
 
-.sidebar.platform-mac {
-  padding-top: 48px;
+.titlebar-area {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 12px;
+  flex-shrink: 0;
+}
+
+.sidebar.platform-mac .titlebar-area {
+  padding-top: 8px;
+  height: 44px;
+}
+
+.traffic-lights {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 11;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+}
+
+.traffic-light {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  color: transparent;
+  transition: color 0.15s;
+}
+
+.traffic-close {
+  background: #ff5f57;
+}
+
+.traffic-minimize {
+  background: #febc2e;
+}
+
+.traffic-maximize {
+  background: #28c840;
+}
+
+.traffic-lights:hover .traffic-close {
+  color: #4d0000;
+}
+
+.traffic-lights:hover .traffic-minimize {
+  color: #995700;
+}
+
+.traffic-lights:hover .traffic-maximize {
+  color: #006500;
 }
 
 .titlebar-drag {
-  display: none;
-}
-
-.sidebar.platform-mac .titlebar-drag {
-  display: block;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 150px;
-  height: 36px;
-  z-index: 10;
+  flex: 1;
+  height: 100%;
   -webkit-app-region: drag;
 }
 
@@ -118,12 +182,8 @@ function handleDisconnect() {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--border);
-}
-
-.sidebar.platform-mac .sidebar-header {
-  padding-top: 8px;
 }
 
 .logo-text {

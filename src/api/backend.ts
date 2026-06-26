@@ -24,7 +24,9 @@ import type {
   VideoActor,
 } from '@/types/backend'
 
-const client = axios.create()
+const client = axios.create({
+  timeout: 30000,
+})
 
 let config: BackendConfig = {
   url: '',
@@ -556,6 +558,17 @@ export async function getComicCharacters(comicId: number): Promise<ComicCharacte
 
 export function getComicCharacterImageUrl(characterId: number): string {
   return `${config.url}/api/v1/comic/character/${characterId}/image`
+}
+
+export interface PerformanceSettings {
+  'watcher.periodic-scan': boolean
+  'watcher.periodic-scan-interval': number
+  'hub.tmdb.scraper-threads': number
+}
+
+export async function getPerformanceSettings(): Promise<PerformanceSettings> {
+  const response = await client.get<ApiResponse<PerformanceSettings>>('/api/v1/settings/performance')
+  return response.data.data
 }
 
 

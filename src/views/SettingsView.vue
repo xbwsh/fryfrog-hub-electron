@@ -117,13 +117,25 @@
           min="0"
           max="10"
           step="0.5"
+          :style="{ background: `linear-gradient(to right, var(--accent) 0%, var(--accent) ${(tmdbMinScore / 10) * 100}%, var(--bg-tertiary) ${(tmdbMinScore / 10) * 100}%, var(--bg-tertiary) 100%)` }"
           @change="saveTmdbSetting('tmdb.min-score', String(tmdbMinScore))"
         />
       </div>
     </div>
 
     <div class="settings-section">
-      <div class="section-title">代理</div>
+      <div class="section-title">
+        代理
+        <span v-if="proxyStatus === 'testing'" class="proxy-status testing">
+          <span class="status-dot"></span> 检测中...
+        </span>
+        <span v-else-if="proxyStatus === 'ok'" class="proxy-status ok">
+          <span class="status-dot"></span> 畅通
+        </span>
+        <span v-else-if="proxyStatus === 'fail'" class="proxy-status fail">
+          <span class="status-dot"></span> 无法连接
+        </span>
+      </div>
       <div class="setting-item">
         <div class="item-info">
           <h3 class="item-label">地址</h3>
@@ -142,13 +154,18 @@
           <h3 class="item-label">端口</h3>
           <p class="item-description">代理服务器端口（修改后需重启）</p>
         </div>
-        <input
-          v-model.number="proxyPort"
-          type="number"
-          class="url-input"
-          placeholder="7890"
-          @blur="saveProxySetting('proxy.port', String(proxyPort))"
-        />
+        <div class="url-input-group">
+          <input
+            v-model.number="proxyPort"
+            type="number"
+            class="url-input"
+            placeholder="7890"
+            @blur="saveProxySetting('proxy.port', String(proxyPort))"
+          />
+          <button class="btn-test" :disabled="proxyStatus === 'testing' || !proxyHost || !proxyPort" @click="testProxy">
+            测试
+          </button>
+        </div>
       </div>
     </div>
 
@@ -179,6 +196,7 @@
           min="0"
           max="10"
           step="0.5"
+          :style="{ background: `linear-gradient(to right, var(--accent) 0%, var(--accent) ${(comicMinScore / 10) * 100}%, var(--bg-tertiary) ${(comicMinScore / 10) * 100}%, var(--bg-tertiary) 100%)` }"
           @change="saveComicSetting('comic.min-score', String(comicMinScore))"
         />
       </div>
@@ -207,6 +225,7 @@
           min="0"
           max="10"
           step="0.5"
+          :style="{ background: `linear-gradient(to right, var(--accent) 0%, var(--accent) ${(anilistMinScore / 10) * 100}%, var(--bg-tertiary) ${(anilistMinScore / 10) * 100}%, var(--bg-tertiary) 100%)` }"
           @change="saveAnilistSetting('anilist.min-score', String(anilistMinScore))"
         />
       </div>
@@ -351,7 +370,7 @@
       <div class="setting-item">
         <div class="item-info">
           <h3 class="item-label">定时扫描</h3>
-          <p class="item-description">macOS 用户建议开启，每 60 秒自动扫描文件变更</p>
+          <p class="item-description">开启后自动扫描文件变更</p>
         </div>
         <button
           class="toggle-switch"
@@ -360,6 +379,24 @@
         >
           <span class="toggle-thumb"></span>
         </button>
+      </div>
+      <div class="setting-item">
+        <div class="item-info">
+          <h3 class="item-label">扫描间隔</h3>
+          <p class="item-description">定时扫描的间隔时间（{{ periodicScanInterval }} 秒），修改后立即生效</p>
+        </div>
+        <div class="url-input-group">
+          <input
+            v-model.number="periodicScanInterval"
+            type="number"
+            class="url-input"
+            min="10"
+            max="3600"
+            placeholder="300"
+            @blur="savePerformanceSetting('watcher.periodic-scan-interval', String(periodicScanInterval))"
+            @keydown.enter="savePerformanceSetting('watcher.periodic-scan-interval', String(periodicScanInterval))"
+          />
+        </div>
       </div>
       <div class="setting-item">
         <div class="item-info">
@@ -374,6 +411,28 @@
         <pre class="result-text">{{ rescanResult }}</pre>
       </div>
     </div>
+
+    <div class="settings-section">
+      <div class="section-title">性能</div>
+      <div class="setting-item">
+        <div class="item-info">
+          <h3 class="item-label">TMDB 刮削线程数</h3>
+          <p class="item-description">同时进行的 TMDB 刮削任务数，下次刮削任务时自动调整</p>
+        </div>
+        <div class="url-input-group">
+          <input
+            v-model.number="scraperThreads"
+            type="number"
+            class="url-input"
+            min="1"
+            max="20"
+            placeholder="1"
+            @blur="savePerformanceSetting('hub.tmdb.scraper-threads', String(scraperThreads))"
+            @keydown.enter="savePerformanceSetting('hub.tmdb.scraper-threads', String(scraperThreads))"
+          />
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -386,6 +445,7 @@ import { useConnectionStore } from '@/stores/connection'
 import {
   getSetting,
   updateSetting,
+  getPerformanceSettings,
 } from '@/api/backend'
 
 const playerStore = usePlayerStore()
@@ -423,6 +483,7 @@ const tmdbMinScore = ref(0)
 // Proxy settings
 const proxyHost = ref('')
 const proxyPort = ref(0)
+const proxyStatus = ref<'idle' | 'testing' | 'ok' | 'fail'>('idle')
 
 // Anilist settings
 const anilistAutoScrape = ref(false)
@@ -443,6 +504,10 @@ const musicCoverFallback = ref(true)
 
 // Watcher settings
 const periodicScan = ref(false)
+
+// Performance settings
+const periodicScanInterval = ref(300)
+const scraperThreads = ref(1)
 
 async function loadSettings() {
   try {
@@ -467,6 +532,7 @@ async function loadSettings() {
       getSetting('music.scrape.lyrics-fallback'),
       getSetting('music.scrape.cover-fallback'),
       getSetting('watcher.periodic-scan'),
+      getPerformanceSettings(),
     ])
 
     if (settings[0]) tmdbApiKey.value = settings[0].value
@@ -489,6 +555,12 @@ async function loadSettings() {
     if (settings[17]) musicLyricsFallback.value = settings[17].value !== 'false'
     if (settings[18]) musicCoverFallback.value = settings[18].value !== 'false'
     if (settings[19]) periodicScan.value = settings[19].value === 'true'
+    
+    const perfSettings = settings[20]
+    if (perfSettings) {
+      periodicScanInterval.value = perfSettings['watcher.periodic-scan-interval'] || 300
+      scraperThreads.value = perfSettings['hub.tmdb.scraper-threads'] || 1
+    }
   } catch (error) {
     console.error('Failed to load settings:', error)
   }
@@ -513,6 +585,25 @@ async function toggleTmdbSetting(key: string, currentValue: boolean) {
 
 async function saveProxySetting(key: string, value: string) {
   await updateSetting(key, value)
+}
+
+async function testProxy() {
+  if (!proxyHost.value || !proxyPort.value) return
+  proxyStatus.value = 'testing'
+  try {
+    const url = `http://${proxyHost.value}:${proxyPort.value}`
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 5000)
+    const response = await fetch(url, {
+      method: 'HEAD',
+      signal: controller.signal,
+      mode: 'no-cors',
+    })
+    clearTimeout(timeout)
+    proxyStatus.value = 'ok'
+  } catch {
+    proxyStatus.value = 'fail'
+  }
 }
 
 async function saveAnilistSetting(key: string, value: string) {
@@ -567,6 +658,10 @@ async function toggleWatcherSetting(key: string, currentValue: boolean) {
   if (key === 'watcher.periodic-scan') periodicScan.value = newValue
 }
 
+async function savePerformanceSetting(key: string, value: string) {
+  await updateSetting(key, value)
+}
+
 async function handleRescan() {
   if (isRescanning.value) return
   isRescanning.value = true
@@ -616,6 +711,9 @@ onMounted(() => {
   letter-spacing: 1.5px;
   color: var(--text-muted);
   margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .setting-item {
@@ -741,6 +839,13 @@ onMounted(() => {
   width: 280px;
   font-family: monospace;
   transition: var(--transition);
+  -moz-appearance: textfield;
+}
+
+.url-input::-webkit-outer-spin-button,
+.url-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .url-input:focus {
@@ -809,5 +914,76 @@ onMounted(() => {
   background: var(--accent);
   cursor: pointer;
   border: none;
+}
+
+.proxy-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.proxy-status.testing .status-dot {
+  background: #f39c12;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.proxy-status.ok .status-dot {
+  background: #2ecc71;
+}
+
+.proxy-status.fail .status-dot {
+  background: #e74c3c;
+}
+
+.proxy-status.testing {
+  color: #f39c12;
+}
+
+.proxy-status.ok {
+  color: #2ecc71;
+}
+
+.proxy-status.fail {
+  color: #e74c3c;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.btn-test {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  height: 36px;
+  box-sizing: border-box;
+}
+
+.btn-test:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-test:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 </style>

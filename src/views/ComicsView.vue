@@ -6,7 +6,7 @@
         <p class="view-subtitle">管理你的漫画库</p>
       </div>
       <div class="header-actions">
-        <SearchBar v-model="searchQuery" placeholder="搜索漫画..." @input="handleSearch" />
+        <SearchBar v-model="searchQuery" placeholder="搜索漫画..." @debounced="handleSearch" />
       </div>
     </div>
 
@@ -89,27 +89,30 @@ async function loadComics() {
 }
 
 async function loadAllSeriesProgress() {
+  const allComics = seriesList.value.flatMap(s => s.comics.map(c => ({ series: s, comic: c })))
+  const results = await Promise.allSettled(
+    allComics.map(({ comic }) => getComicProgress(comic.id))
+  )
   const map = new Map<string, { percent: number; text: string }>()
-  for (const series of seriesList.value) {
-    let totalProgress = 0
-    let count = 0
-    let lastText = ''
-    for (const comic of series.comics) {
-      try {
-        const progress = await getComicProgress(comic.id)
-        if (progress && !progress.completed) {
-          totalProgress += progress.progressPercent
-          count++
-          lastText = `第${progress.currentPage}页 ${Math.round(progress.progressPercent)}%`
-        }
-      } catch {
-        // ignore
+  const seriesStats = new Map<string, { totalProgress: number; count: number; lastText: string }>()
+  results.forEach((result, i) => {
+    if (result.status === 'fulfilled') {
+      const progress = result.value
+      const seriesName = allComics[i].series.name
+      if (progress && !progress.completed) {
+        const stats = seriesStats.get(seriesName) || { totalProgress: 0, count: 0, lastText: '' }
+        stats.totalProgress += progress.progressPercent
+        stats.count++
+        stats.lastText = `第${progress.currentPage}页 ${Math.round(progress.progressPercent)}%`
+        seriesStats.set(seriesName, stats)
       }
     }
-    if (count > 0) {
-      map.set(series.name, {
-        percent: Math.round(totalProgress / count),
-        text: `${count}本阅读中 · ${lastText}`
+  })
+  for (const [name, stats] of seriesStats) {
+    if (stats.count > 0) {
+      map.set(name, {
+        percent: Math.round(stats.totalProgress / stats.count),
+        text: `${stats.count}本阅读中 · ${stats.lastText}`
       })
     }
   }

@@ -123,11 +123,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, defineAsyncComponent, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { Comic } from '@/types/backend'
 import { getComicById, toggleComicFavorite, getComicCoverUrl, getComicProgress } from '@/api/backend'
-import ComicReader from '@/views/ComicReader.vue'
+const ComicReader = defineAsyncComponent(() => import('@/views/ComicReader.vue'))
 
 const router = useRouter()
 const route = useRoute()

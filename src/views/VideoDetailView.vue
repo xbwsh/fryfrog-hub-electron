@@ -114,31 +114,19 @@
 
         <div class="section">
           <h3>剧集列表</h3>
-          <div class="episode-list">
+          <div class="episode-grid">
             <div
               v-for="episode in series.episodes"
               :key="episode.id"
-              class="episode-item"
-              :class="{ active: episode.id === video?.id }"
+              class="episode-block"
+              :class="{
+                active: episode.id === video?.id,
+                watched: episode.watched,
+                'has-progress': episode.watchProgressPercent > 0 && !episode.watched
+              }"
               @click="selectEpisode(episode)"
             >
-              <div class="episode-number">{{ episode.episodeNumber }}</div>
-              <div class="episode-info">
-                <div class="episode-title">{{ episode.title }} - 第 {{ episode.episodeNumber }} 集</div>
-                <div class="episode-file">{{ episode.fileName }}</div>
-                <div v-if="episode.watchProgressPercent > 0" class="episode-progress">
-                  <div class="progress-bar">
-                    <div class="progress-fill" :style="{ width: Math.min(episode.watchProgressPercent, 100) + '%' }"></div>
-                  </div>
-                  <span v-if="episode.watched" class="progress-text watched">已看完</span>
-                  <span v-else class="progress-text">{{ Math.round(episode.watchProgressPercent) }}%</span>
-                </div>
-              </div>
-              <div class="episode-play">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <polygon points="5 3 19 12 5 21 5 3"/>
-                </svg>
-              </div>
+              {{ episode.episodeNumber }}
             </div>
           </div>
         </div>
@@ -425,11 +413,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, defineAsyncComponent, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { VideoDTO, SeriesDTO, VideoActor } from '@/types/backend'
 import { getVideoById, getSeriesById, toggleVideoFavorite, getVideoPosterUrl, getVideoFanartUrl, getSeriesPosterUrl, getSeriesFanartUrl, deleteVideoProgress, getVideoActors, searchTmdb, bindTmdb, refreshTmdb, unbindTmdb } from '@/api/backend'
-import VideoPlayer from '@/views/VideoPlayer.vue'
+const VideoPlayer = defineAsyncComponent(() => import('@/views/VideoPlayer.vue'))
 
 const router = useRouter()
 const route = useRoute()
@@ -542,10 +530,8 @@ async function handleUnbindTmdb() {
   if (!targetId) return
   if (!confirm('确定要解绑 TMDB 元数据吗？')) return
   try {
-    const updated = await unbindTmdb(targetId)
-    if (updated) {
-      await loadVideo()
-    }
+    await unbindTmdb(targetId)
+    await loadVideo()
   } catch (e) {
     console.error('Unbind TMDB failed:', e)
   }
@@ -1279,109 +1265,44 @@ onMounted(loadVideo)
 
 
 
-.episode-list {
-  display: flex;
-  flex-direction: column;
+.episode-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
   gap: 8px;
 }
 
-.episode-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.episode-item:hover {
-  background: var(--bg-hover);
-}
-
-.episode-item.active {
-  background: var(--accent-glow);
-  border: 1px solid var(--accent);
-}
-
-.episode-number {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--bg-tertiary);
+.episode-block {
+  aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  font-size: 15px;
   font-weight: 500;
   color: var(--text-primary);
-  flex-shrink: 0;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
 }
 
-.episode-item.active .episode-number {
+.episode-block:hover {
+  background: var(--bg-hover);
+  transform: scale(1.05);
+}
+
+.episode-block.active {
   background: var(--accent);
   color: white;
 }
 
-.episode-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.episode-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-primary);
-  margin-bottom: 2px;
-}
-
-.episode-file {
-  font-size: 12px;
-  color: var(--text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.episode-progress {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 6px;
-}
-
-.progress-bar {
-  flex: 1;
-  height: 4px;
+.episode-block.watched {
   background: var(--bg-tertiary);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: var(--accent);
-  border-radius: 2px;
-  transition: width 0.3s ease;
-}
-
-.progress-text {
-  font-size: 11px;
   color: var(--text-muted);
-  flex-shrink: 0;
 }
 
-.progress-text.watched {
-  color: #2ecc71;
-}
-
-.episode-play {
-  color: var(--text-muted);
-  transition: var(--transition);
-}
-
-.episode-item:hover .episode-play {
+.episode-block.has-progress {
+  background: var(--accent-glow);
   color: var(--accent);
 }
 </style>

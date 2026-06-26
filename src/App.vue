@@ -64,15 +64,14 @@ onMounted(async () => {
   overflow: hidden;
 }
 
-.main-area.platform-mac .titlebar-drag {
-  display: block;
-  height: 36px;
+.titlebar-drag {
+  height: 32px;
   flex-shrink: 0;
   -webkit-app-region: drag;
 }
 
-.titlebar-drag {
-  display: none;
+.main-area.platform-mac .titlebar-drag {
+  height: 36px;
 }
 
 .main-content {

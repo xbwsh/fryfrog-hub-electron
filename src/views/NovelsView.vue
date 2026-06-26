@@ -6,7 +6,7 @@
         <p class="view-subtitle">管理你的电子书库</p>
       </div>
       <div class="header-actions">
-        <SearchBar v-model="searchQuery" placeholder="搜索电子书..." @input="handleSearch" />
+        <SearchBar v-model="searchQuery" placeholder="搜索电子书..." @debounced="handleSearch" />
       </div>
     </div>
 
@@ -76,11 +76,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, defineAsyncComponent, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { Ebook, EbookSeries } from '@/types/backend'
 import { getEbookSeries, getEbookProgress } from '@/api/backend'
-import EbookReader from '@/views/EbookReader.vue'
+const EbookReader = defineAsyncComponent(() => import('@/views/EbookReader.vue'))
 import SearchBar from '@/components/SearchBar.vue'
 
 const route = useRoute()
@@ -107,27 +107,30 @@ async function loadEbooks() {
 }
 
 async function loadAllSeriesProgress() {
+  const allBooks = seriesList.value.flatMap(s => s.books.map(b => ({ series: s, book: b })))
+  const results = await Promise.allSettled(
+    allBooks.map(({ book }) => getEbookProgress(book.id))
+  )
   const map = new Map<string, { percent: number; text: string }>()
-  for (const series of seriesList.value) {
-    let totalProgress = 0
-    let count = 0
-    let lastText = ''
-    for (const book of series.books) {
-      try {
-        const progress = await getEbookProgress(book.id)
-        if (progress && !progress.completed) {
-          totalProgress += progress.chapterProgressPercent
-          count++
-          lastText = `第${progress.currentChapter}章 ${Math.round(progress.chapterProgressPercent)}%`
-        }
-      } catch {
-        // ignore
+  const seriesStats = new Map<string, { totalProgress: number; count: number; lastText: string }>()
+  results.forEach((result, i) => {
+    if (result.status === 'fulfilled') {
+      const progress = result.value
+      const seriesName = allBooks[i].series.name
+      if (progress && !progress.completed) {
+        const stats = seriesStats.get(seriesName) || { totalProgress: 0, count: 0, lastText: '' }
+        stats.totalProgress += progress.chapterProgressPercent
+        stats.count++
+        stats.lastText = `第${progress.currentChapter}章 ${Math.round(progress.chapterProgressPercent)}%`
+        seriesStats.set(seriesName, stats)
       }
     }
-    if (count > 0) {
-      map.set(series.name, {
-        percent: Math.round(totalProgress / count),
-        text: `${count}本阅读中 · ${lastText}`
+  })
+  for (const [name, stats] of seriesStats) {
+    if (stats.count > 0) {
+      map.set(name, {
+        percent: Math.round(stats.totalProgress / stats.count),
+        text: `${stats.count}本阅读中 · ${stats.lastText}`
       })
     }
   }

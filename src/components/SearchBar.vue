@@ -4,19 +4,32 @@
       <circle cx="11" cy="11" r="8"/>
       <line x1="21" y1="21" x2="16.65" y2="16.65"/>
     </svg>
-    <input :value="modelValue" type="text" :placeholder="placeholder" @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)" />
+    <input :value="modelValue" type="text" :placeholder="placeholder" @input="onInput" />
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+
 defineProps<{
   modelValue: string
   placeholder?: string
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
+
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+function onInput(e: Event) {
+  const value = (e.target as HTMLInputElement).value
+  emit('update:modelValue', value)
+  if (debounceTimer) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => {
+    emit('debounced', value)
+  }, 300)
+}
 </script>
 
 <style scoped>

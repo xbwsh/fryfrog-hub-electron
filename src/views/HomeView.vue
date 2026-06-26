@@ -39,7 +39,7 @@
         >
           <div v-for="track in musicTracks" :key="track.id" class="content-card" @click="playMusic(track)">
             <div class="card-cover music-cover">
-              <img :src="getMusicCoverArtUrl(track.id)" alt="封面" draggable="false" />
+              <img loading="lazy" :src="getMusicCoverArtUrl(track.id)" alt="封面" draggable="false" />
             </div>
             <div class="card-info">
               <span class="card-title">{{ track.title }}</span>
@@ -103,7 +103,7 @@
         >
           <div v-for="comic in comics" :key="comic.id" class="content-card" @click="readComic(comic)">
             <div class="card-cover comic-cover">
-              <img :src="getComicCoverUrl(comic.id)" alt="封面" draggable="false" @error="onImageError" />
+              <img loading="lazy" :src="getComicCoverUrl(comic.id)" alt="封面" draggable="false" @error="onImageError" />
             </div>
             <div class="card-info">
               <span class="card-title">{{ comic.title }}</span>
@@ -164,7 +164,7 @@
         >
           <div v-for="book in ebooks" :key="book.id" class="content-card" @click="readEbook(book)">
             <div class="card-cover ebook-cover">
-              <img :src="getEbookCoverUrl(book.id)" alt="封面" draggable="false" @error="onImageError" />
+              <img loading="lazy" :src="getEbookCoverUrl(book.id)" alt="封面" draggable="false" @error="onImageError" />
             </div>
             <div class="card-info">
               <span class="card-title">{{ book.title }}</span>
@@ -225,7 +225,7 @@
         >
           <div v-for="series in seriesList" :key="series.id" class="content-card" @click="watchVideo(series)">
             <div class="card-cover video-cover">
-              <img :src="series.posterUrl || getSeriesPosterUrl(series.id)" alt="封面" draggable="false" @error="onImageError" />
+              <img loading="lazy" :src="series.posterUrl || getSeriesPosterUrl(series.id)" alt="封面" draggable="false" @error="onImageError" />
             </div>
             <div class="card-info">
               <span class="card-title">{{ series.title }}</span>
@@ -393,17 +393,18 @@ onMounted(async () => {
 })
 
 async function loadComicProgress() {
+  const results = await Promise.allSettled(
+    comics.value.map(comic => getComicProgress(comic.id))
+  )
   const map = new Map<number, ComicProgress>()
-  for (const comic of comics.value) {
-    try {
-      const progress = await getComicProgress(comic.id)
+  results.forEach((result, i) => {
+    if (result.status === 'fulfilled') {
+      const progress = result.value
       if (progress && !progress.completed) {
-        map.set(comic.id, progress)
+        map.set(comics.value[i].id, progress)
       }
-    } catch {
-      // ignore
     }
-  }
+  })
   comicProgressMap.value = map
 }
 
