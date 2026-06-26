@@ -54,8 +54,7 @@
       "icon": "resources/icon.png",
       "target": [
         "nsis"
-      ],
-      "locale": "zh-CN"
+      ]
     },
     "linux": {
       "artifactName": "${productName}-${version}.${ext}",
