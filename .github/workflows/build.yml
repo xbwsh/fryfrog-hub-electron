@@ -38,10 +38,11 @@ jobs:
 
       - run: npm ci
 
-      - name: Build Electron App
-        run: npm run ${{ matrix.build_cmd }}
-        env:
-          PUBLISH: never
+      - name: Build
+        run: npm run build
+
+      - name: Package
+        run: npx electron-builder --${{ matrix.platform }} --publish never
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
