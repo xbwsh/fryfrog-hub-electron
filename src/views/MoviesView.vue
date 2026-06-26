@@ -17,7 +17,6 @@
             <line x1="12" y1="18" x2="12" y2="18.01"/>
           </svg>
         </button>
-        <ScanDirectoryDialog title="扫描视频目录" description="输入要扫描的目录路径，支持 mkv、mp4 等格式" input-placeholder="例如: /media/videos" @scan="handleScan" />
         <SearchBar v-model="searchQuery" placeholder="搜索视频..." @input="handleSearch" />
       </div>
     </div>
@@ -77,9 +76,8 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import type { SeriesDTO } from '@/types/backend'
-import { getAllSeries, getSeriesPosterUrl, getSeriesFanartUrl, scanVideoDirectory } from '@/api/backend'
+import { getAllSeries, getSeriesPosterUrl, getSeriesFanartUrl } from '@/api/backend'
 import SearchBar from '@/components/SearchBar.vue'
-import ScanDirectoryDialog from '@/components/ScanDirectoryDialog.vue'
 
 const router = useRouter()
 const seriesList = ref<SeriesDTO[]>([])
@@ -91,16 +89,6 @@ const displayMode = ref<'landscape' | 'portrait'>(localStorage.getItem('fryfrog-
 function toggleDisplayMode() {
   displayMode.value = displayMode.value === 'landscape' ? 'portrait' : 'landscape'
   localStorage.setItem('fryfrog-video-display-mode', displayMode.value)
-}
-
-async function handleScan(path: string) {
-  try {
-    await scanVideoDirectory(path)
-    await loadVideos()
-  } catch (e) {
-    error.value = '扫描失败'
-    console.error('Failed to scan directory:', e)
-  }
 }
 
 async function loadVideos() {

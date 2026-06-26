@@ -6,14 +6,6 @@
         <p class="view-subtitle">管理你的音乐库</p>
       </div>
       <div class="header-actions">
-        <button class="btn-scrape" :disabled="scrapingAll" @click="handleScrapeAll">
-          <svg v-if="!scrapingAll" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          <div v-else class="scrape-spinner"></div>
-          {{ scrapingAll ? '刮削中...' : '批量刮削' }}
-        </button>
-        <ScanDirectoryDialog title="扫描音乐目录" description="输入要扫描的目录路径，支持 mp3、flac、wav 等格式" input-placeholder="例如: /media/music" @scan="handleScan" />
         <SearchBar v-model="searchQuery" placeholder="搜索音乐..." @input="handleSearch" />
       </div>
     </div>
@@ -88,12 +80,11 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import type { MusicTrack } from '@/types/backend'
-import { getAllTracks, getMusicCoverArtUrl, scrapeTrack, scrapeAllTracks, searchMusic, scanDirectory } from '@/api/backend'
+import { getAllTracks, getMusicCoverArtUrl, scrapeTrack, searchMusic } from '@/api/backend'
 import { usePlayerStore } from '@/stores/player'
 import MusicPlayerBar from '@/components/MusicPlayerBar.vue'
 import LyricsPanel from '@/components/LyricsPanel.vue'
 import SearchBar from '@/components/SearchBar.vue'
-import ScanDirectoryDialog from '@/components/ScanDirectoryDialog.vue'
 
 const playerStore = usePlayerStore()
 const tracks = ref<MusicTrack[]>([])
@@ -101,7 +92,6 @@ const loading = ref(false)
 const error = ref('')
 const showLyrics = ref(false)
 const scrapingId = ref<number | null>(null)
-const scrapingAll = ref(false)
 const searchQuery = ref('')
 
 const contextMenu = ref({ visible: false, x: 0, y: 0, trackId: 0 })
@@ -133,19 +123,6 @@ async function handleScrape() {
   }
 }
 
-async function handleScrapeAll() {
-  if (scrapingAll.value) return
-  scrapingAll.value = true
-  try {
-    await scrapeAllTracks()
-    await loadTracks()
-  } catch (e) {
-    console.error('Scrape all failed:', e)
-  } finally {
-    scrapingAll.value = false
-  }
-}
-
 async function handleSearch() {
   if (!searchQuery.value.trim()) {
     await loadTracks()
@@ -160,16 +137,6 @@ async function handleSearch() {
     console.error('Search failed:', e)
   } finally {
     loading.value = false
-  }
-}
-
-async function handleScan(path: string) {
-  try {
-    await scanDirectory(path)
-    await loadTracks()
-  } catch (e) {
-    error.value = '扫描失败'
-    console.error('Failed to scan directory:', e)
   }
 }
 
@@ -263,45 +230,6 @@ onUnmounted(() => {
 .scan-btn:hover {
   border-color: var(--accent);
   color: var(--accent);
-}
-
-.btn-scrape {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: var(--radius-md);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  color: var(--text-primary);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition);
-  white-space: nowrap;
-  flex-shrink: 0;
-  height: 36px;
-  box-sizing: border-box;
-}
-
-.btn-scrape:hover:not(:disabled) {
-  background: var(--accent);
-  color: white;
-  border-color: var(--accent);
-}
-
-.btn-scrape:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.scrape-spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--border);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
 }
 
 .search-bar {

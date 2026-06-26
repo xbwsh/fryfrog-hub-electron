@@ -211,7 +211,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { ComicSeries, ComicVolume, ComicProgress, AnilistMediaItem, BangumiItem, ComicCharacter } from '@/types/backend'
-import { getComicSeries, getComicCoverUrl, getComicCoverUrlWithCache, getComicProgress, searchAnilistComics, bindAnilistMetadata, searchBangumiComics, bindBangumiMetadata, getComicCharacters, getComicCharacterImageUrl } from '@/api/backend'
+import { getComicSeries, getComicCoverUrl, getComicCoverUrlWithCache, getComicProgress, searchAnilistComics, bindAnilistMetadata, searchBangumiComics, bindBangumiMetadata, getComicCharacters, getComicCharacterImageUrl, getSeriesCoverUrl } from '@/api/backend'
 
 const router = useRouter()
 const route = useRoute()
@@ -223,11 +223,9 @@ const comicProgressMap = ref<Map<number, ComicProgress>>(new Map())
 const characters = ref<ComicCharacter[]>([])
 const seriesCoverUrl = computed(() => {
   if (!series.value) return ''
-  if (series.value.coverArtPath) {
-    return getSeriesCoverUrl(series.value.coverArtPath)
-  }
+  if (series.value.coverUrl) return getSeriesCoverUrl(series.value.coverUrl)
   const first = series.value.comics[0]
-  if (first) return getComicCoverUrl(first.id)
+  if (first) return getComicCoverUrlWithCache(first.id, first.updatedAt)
   return ''
 })
 const showAnilistSearch = ref(false)
@@ -308,11 +306,6 @@ function viewComic(comic: ComicVolume) {
   router.push({ name: 'comic-detail', params: { id: comic.id } })
 }
 
-function getSeriesCoverUrl(coverPath: string): string {
-  if (!coverPath) return ''
-  if (coverPath.startsWith('http')) return coverPath
-  return `/api/v1/comic/cover-image?path=${encodeURIComponent(coverPath)}`
-}
 
 function onImageError(e: Event) {
   const img = e.target as HTMLImageElement

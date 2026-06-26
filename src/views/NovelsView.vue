@@ -6,7 +6,6 @@
         <p class="view-subtitle">管理你的电子书库</p>
       </div>
       <div class="header-actions">
-        <ScanDirectoryDialog title="扫描电子书目录" description="输入要扫描的目录路径，支持 .epub、.txt 等格式" input-placeholder="例如: /media/books" @scan="handleScan" />
         <SearchBar v-model="searchQuery" placeholder="搜索电子书..." @input="handleSearch" />
       </div>
     </div>
@@ -80,10 +79,9 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { Ebook, EbookSeries } from '@/types/backend'
-import { getEbookSeries, scanEbookDirectory, getEbookProgress } from '@/api/backend'
+import { getEbookSeries, getEbookProgress } from '@/api/backend'
 import EbookReader from '@/views/EbookReader.vue'
 import SearchBar from '@/components/SearchBar.vue'
-import ScanDirectoryDialog from '@/components/ScanDirectoryDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -188,16 +186,6 @@ function getSeriesCoverUrl(coverPath: string): string {
 function onImageError(e: Event) {
   const img = e.target as HTMLImageElement
   img.style.display = 'none'
-}
-
-async function handleScan(path: string) {
-  try {
-    await scanEbookDirectory(path)
-    await loadEbooks()
-  } catch (e) {
-    error.value = '扫描失败'
-    console.error('Failed to scan directory:', e)
-  }
 }
 
 onMounted(async () => {

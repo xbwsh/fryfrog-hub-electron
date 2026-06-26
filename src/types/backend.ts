@@ -76,6 +76,7 @@ export interface ComicSeries {
   name: string
   author: string
   coverArtPath: string
+  coverUrl: string
   seriesSummary: string | null
   serializationStart: string | null
   volumeCount: number

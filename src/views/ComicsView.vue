@@ -6,21 +6,6 @@
         <p class="view-subtitle">管理你的漫画库</p>
       </div>
       <div class="header-actions">
-        <button class="scrape-btn" :disabled="scraping" @click="handleAutoScrape">
-          <svg v-if="!scraping" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          <div v-else class="scrape-spinner"></div>
-          {{ scraping ? '刮削中...' : '自动刮削' }}
-        </button>
-        <button class="scrape-btn" :disabled="organizing" @click="handleOrganize">
-          <svg v-if="!organizing" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-          </svg>
-          <div v-else class="scrape-spinner"></div>
-          {{ organizing ? '整理中...' : '整理漫画' }}
-        </button>
-        <ScanDirectoryDialog title="扫描漫画目录" description="输入要扫描的目录路径，支持 .cbz、.cbr 等格式" input-placeholder="例如: /media/comics" @scan="handleScan" />
         <SearchBar v-model="searchQuery" placeholder="搜索漫画..." @input="handleSearch" />
       </div>
     </div>
@@ -52,7 +37,7 @@
       >
         <div class="card-cover">
           <img
-            :src="getSeriesCoverUrl(series)"
+            :src="getSeriesCoverUrlForSeries(series)"
             :alt="series.name"
             draggable="false"
             @error="onImageError"
@@ -79,9 +64,8 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import type { ComicSeries } from '@/types/backend'
-import { getComicSeries, getComicProgress, getComicCoverUrl, getComicCoverUrlWithCache, scanComicDirectory, autoScrapeComics, organizeComics } from '@/api/backend'
+import { getComicSeries, getComicProgress, getComicCoverUrl, getComicCoverUrlWithCache, getSeriesCoverUrl } from '@/api/backend'
 import SearchBar from '@/components/SearchBar.vue'
-import ScanDirectoryDialog from '@/components/ScanDirectoryDialog.vue'
 
 const router = useRouter()
 const seriesList = ref<ComicSeries[]>([])
@@ -89,8 +73,6 @@ const loading = ref(false)
 const error = ref('')
 const searchQuery = ref('')
 const seriesProgressMap = ref<Map<string, { percent: number; text: string }>>(new Map())
-const scraping = ref(false)
-const organizing = ref(false)
 
 async function loadComics() {
   loading.value = true
@@ -164,11 +146,8 @@ function viewSeries(series: ComicSeries) {
   router.push({ name: 'comic-series', params: { name: series.name } })
 }
 
-function getSeriesCoverUrl(series: ComicSeries): string {
-  if (series.coverArtPath) {
-    if (series.coverArtPath.startsWith('http')) return series.coverArtPath
-    return `/api/v1/comic/cover-image?path=${encodeURIComponent(series.coverArtPath)}`
-  }
+function getSeriesCoverUrlForSeries(series: ComicSeries): string {
+  if (series.coverUrl) return getSeriesCoverUrl(series.coverUrl)
   const first = series.comics[0]
   if (first) return getComicCoverUrlWithCache(first.id, first.updatedAt)
   return ''
@@ -177,42 +156,6 @@ function getSeriesCoverUrl(series: ComicSeries): string {
 function onImageError(e: Event) {
   const img = e.target as HTMLImageElement
   img.style.display = 'none'
-}
-
-async function handleScan(path: string) {
-  try {
-    await scanComicDirectory(path)
-    await loadComics()
-  } catch (e) {
-    error.value = '扫描失败'
-    console.error('Failed to scan directory:', e)
-  }
-}
-
-async function handleAutoScrape() {
-  scraping.value = true
-  try {
-    await autoScrapeComics()
-    await loadComics()
-  } catch (e) {
-    error.value = '自动刮削失败'
-    console.error('Auto scrape failed:', e)
-  } finally {
-    scraping.value = false
-  }
-}
-
-async function handleOrganize() {
-  organizing.value = true
-  try {
-    await organizeComics()
-    await loadComics()
-  } catch (e) {
-    error.value = '整理漫画失败'
-    console.error('Organize failed:', e)
-  } finally {
-    organizing.value = false
-  }
 }
 
 onMounted(loadComics)
@@ -251,42 +194,6 @@ onMounted(loadComics)
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.scrape-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: var(--radius-md);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  color: var(--text-primary);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition);
-  white-space: nowrap;
-}
-
-.scrape-btn:hover:not(:disabled) {
-  background: var(--accent);
-  color: white;
-  border-color: var(--accent);
-}
-
-.scrape-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.scrape-spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--border);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
 }
 
 .loading-state,
