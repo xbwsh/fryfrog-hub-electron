@@ -18,6 +18,18 @@ npm run build:win    # 打包 Windows
 npm run build:linux  # 打包 Linux
 ```
 
+## 安装
+
+从 [Releases](https://github.com/xbwsh/fryfrog-hub-electron/releases) 下载对应平台的安装包。
+
+### macOS
+
+安装后若提示"应用已损坏"或"无法验证开发者"，请在终端执行：
+
+```bash
+xattr -cr /Applications/Fryfrog\ Hub.app
+```
+
 ## 技术栈
 
 - **框架**：Electron 33 + Vue 3.5 + TypeScript 5.7
