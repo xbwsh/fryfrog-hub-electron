@@ -260,17 +260,17 @@
           <p>{{ video.overview }}</p>
         </div>
 
-        <div class="section" v-if="video.actors">
+        <div class="section" v-if="actors.length > 0">
           <h3>演职人员</h3>
           <div class="actor-list">
-            <div class="actor-item" v-for="actor in video.actors.split(/[,，、]/)" :key="actor">
+            <div class="actor-item" v-for="actor in actors" :key="actor">
               <div class="actor-avatar">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                   <circle cx="12" cy="7" r="4"/>
                 </svg>
               </div>
-              <span class="actor-name">{{ actor.trim() }}</span>
+              <span class="actor-name">{{ actor }}</span>
             </div>
           </div>
         </div>
@@ -334,7 +334,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { VideoDTO, SeriesDTO } from '@/types/backend'
-import { getVideoById, getSeriesById, toggleVideoFavorite, getVideoPosterUrl, getVideoFanartUrl, getSeriesPosterUrl, getSeriesFanartUrl, deleteVideoProgress } from '@/api/backend'
+import { getVideoById, getSeriesById, toggleVideoFavorite, getVideoPosterUrl, getVideoFanartUrl, getSeriesPosterUrl, getSeriesFanartUrl, deleteVideoProgress, getVideoActors } from '@/api/backend'
 import VideoPlayer from '@/views/VideoPlayer.vue'
 
 const router = useRouter()
@@ -345,6 +345,7 @@ const series = ref<SeriesDTO | null>(null)
 const loading = ref(false)
 const error = ref('')
 const showPlayer = ref(false)
+const actors = ref<string[]>([])
 
 async function loadVideo() {
   const id = Number(route.params.id)
@@ -364,6 +365,11 @@ async function loadVideo() {
         if (seriesData) {
           series.value = seriesData
         }
+      }
+      try {
+        actors.value = await getVideoActors(id)
+      } catch {
+        actors.value = data.actors ? data.actors.split(/[,，、]/).map(a => a.trim()).filter(Boolean) : []
       }
     } else {
       error.value = '视频不存在'
